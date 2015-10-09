@@ -15,6 +15,8 @@ namespace widkeyPaperDiaper
         string queeryTitle;
         string contentRegex;
         string sid;
+        string mid;
+        string target;
 
         bool haveLogin = false;
 
@@ -51,21 +53,22 @@ namespace widkeyPaperDiaper
             sid = Regex.Match(html, @"(?<=\.jsp\?sid=)\w+?(?=&df=)").Value;
         // .jsp?sid=JAmlshvoaqUOwBHuygoonwWhpMKSFGmL&df=mail163_letter"
 
+            form1.setLogT("login " + address + " succeed.");
 
-
-            //to get sid cookie
+            
+            //to get cookie: coremail.sid
             html = Form1.weLoveYue(
                 form1,
                 "http://hwwebmail.mail.163.com/js6/main.jsp?sid="+ sid +"&df=mail163_letter",
-//               http://hwwebmail.mail.163.com/js6/main.jsp?sid=JAmlshvoaqUOwBHuygoonwWhpMKSFGmL&df=mail163_letter
+            //   http://hwwebmail.mail.163.com/js6/main.jsp?sid=JAmlshvoaqUOwBHuygoonwWhpMKSFGmL&df=mail163_letter
                 "GET",
                 "http://mail.163.com/",
                 false,
                 "",
                 //savelogin=0&url2=http%3A%2F%2Fmail.163.com%2Ferrorpage%2Ferror163.htm&username=15985830370&password=dyyr0125
-                "mail.163.com"
+                "hwwebmail.mail.163.com"
                 );
-
+/*
             if (html.Contains("网易邮箱6.0版"))
             {
                 form1.setLogT("login " + address + " succeed.");
@@ -77,10 +80,25 @@ namespace widkeyPaperDiaper
                 form1.setLogT("login " + address + " failed.");
                 return -1;
             }
-            
+         */
+            /*
+            //to get cookie: JSESSIONID
+            html = Form1.weLoveYue(
+             form1,
+             "http://hwwebmail.mail.163.com/contacts/call.do?uid=m" + address + "&sid=" + sid + "&from=webmail&cmd=newapi.getContacts&vcardver=3.0&ctype=all&attachinfos=yellowpage,frequentContacts&freContLim=20",
+                //http://hwwebmail.mail.163.com/contacts/call.do?uid=m15985830370@163.com&sid=zBlWgvjqvNoMaBtMqNqqORPEhgODezIV&from=webmail&cmd=newapi.getContacts&vcardver=3.0&ctype=all&attachinfos=yellowpage,frequentContacts&freContLim=20
+             "POST",
+             "http://mail.163.com/",
+             false,
+             "order=[{\"field\":\"N\",\"desc\":\"false\"}]",
+             "hwwebmail.mail.163.com"
+             );
+            */
+
+            return 1;
         }
 
-        public void queery()
+        public string queery()
         {
             if (!haveLogin)
             {
@@ -105,16 +123,65 @@ namespace widkeyPaperDiaper
                     + "%3Cboolean%20name%3D%22skipLockedFolders%22%3Etrue%3C%2Fboolean%3E%3Cboolean%20name%3D%22returnTag%22"
                     + "%3Etrue%3C%2Fboolean%3E%3Cboolean%20name%3D%22returnTotal%22%3Etrue%3C%2Fboolean%3E%3C%2Fobject%3E",
 
-                    "mail.163.com"
+                    "hwwebmail.mail.163.com"
                     );
 
                 if (html.Contains("<string name=\"subject\">"+queeryTitle+"</string>"))
-                //<string name="subject">ご注文予約案内</string>
                 {
-                    // find the url
+                    mid = Regex.Match(html, @"(?<=<string name=""id"">).+?(?=<\/string>\n.*\n.*\n.*\n.*\n.*"+queeryTitle+")").Value;
+                    //<string name="id">47:1tbiLxuMOFUL4Qg6aQAAsk</string>
+                    //......4 lines
+                    //<string name="subject">ご注文予約案内</string>
 
 
-                    break;
+                    
+
+                    /*
+                    //POST requst the specific mail
+                    html = Form1.weLoveYue(
+                        form1,
+                        "http://hwwebmail.mail.163.com/js6/s?sid="+sid+"&func=mbox:readMessage&deftabclick=t3&l=read&action=read",
+               //        http://hwwebmail.mail.163.com/js6/s?sid=JASffhvoYoQOwBeuygooOMBOzURbdSPL&func=mbox:readMessage&deftabclick=t3&mbox_mobile_ul_icon_show=1&l=read&action=read
+                        "POST",
+                        "http://hwwebmail.mail.163.com/js6/main.jsp?sid=" + sid + "&df=mail163_letter",
+                        false,
+                        "var=%3C%3Fxml%20version%3D%221.0%22%3F%3E%3Cobject%3E%3Cstring%20name%3D%22id%22%3E"+ Form1.ToUrlEncode(mid) //171%3A1tbiqxSMOFUL7APXEQAAs8
+                        + "%3C%2Fstring%3E%3Cboolean%20name%3D%22header%22%3Etrue%3C%2Fboolean%3E%3Cboolean%20name%3D%22returnImageInfo"
+                        + "%22%3Etrue%3C%2Fboolean%3E%3Cboolean%20name%3D%22returnAntispamInfo%22%3Etrue%3C%2Fboolean%3E%3Cboolean"
+                        + "%20name%3D%22autoName%22%3Etrue%3C%2Fboolean%3E%3Cobject%20name%3D%22returnHeaders%22%3E%3Cstring%20name"
+                        + "%3D%22Resent-From%22%3EA%3C%2Fstring%3E%3Cstring%20name%3D%22Sender%22%3EA%3C%2Fstring%3E%3Cstring%20name"
+                        + "%3D%22List-Unsubscribe%22%3EA%3C%2Fstring%3E%3Cstring%20name%3D%22Reply-To%22%3EA%3C%2Fstring%3E%3C%2Fobject"
+                        + "%3E%3Cboolean%20name%3D%22supportTNEF%22%3Etrue%3C%2Fboolean%3E%3C%2Fobject%3E",
+
+                        "mail.163.com"
+                        );
+                    */
+
+
+                    //GET the content
+                    html = Form1.weLoveYue(
+                    form1,
+                    "http://hwwebmail.mail.163.com/js6/read/readhtml.jsp?mid=" + mid + "&font=15&color=064977", //171:1tbiqxSMOFUL7APXEQAAs8
+                   //http://hwwebmail.mail.163.com/js6/read/readhtml.jsp?mid=171:1tbiqxSMOFUL7APXEQAAs8&font=15&color=064977
+                    "GET",
+                    "http://hwwebmail.mail.163.com/js6/main.jsp?sid=" + sid + "&df=mail163_letter",
+                    false,
+                    "",
+                    "hwwebmail.mail.163.com"
+                    );
+
+
+                    target = Regex.Match(html, contentRegex ).Value;
+
+              //      <pre>下記URLより予約フォームにお進みいただき、ご登録いただくと予約が完了いたします。
+
+              //      https://aksale.advs.jp/cp/akachan_sale_pc/reg?id=w9EI8lKSAvC4he7hZIEWESR6JYXLHg1w
+
+
+               //(c)AKACHAN HONPO
+
+
+                    return target;
                 }
                 else
                 {

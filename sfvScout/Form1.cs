@@ -15,6 +15,9 @@ using System.Net.Cache;
 
 namespace widkeyPaperDiaper
 {
+    
+
+
     public partial class Form1 : Form
     {
         
@@ -113,23 +116,23 @@ namespace widkeyPaperDiaper
                 testLog.Visible = true;
                 this.ClientSize = new System.Drawing.Size(931, 760);
             }
-            
-            DateTime t = GetNistTime(this);
-            if (t == DateTime.MinValue)
-            {
-                setLogT("请连接互联网后重新启动程序");
-                autoB.Visible = false;
-            }
             else
             {
-                if ((t - expireDate).Days > 0)
+                DateTime t = GetNistTime(this);
+                if (t == DateTime.MinValue)
                 {
-                    setLogT("程序已过期，请联系作者");
+                    setLogT("请连接互联网后重新启动程序");
                     autoB.Visible = false;
                 }
+                else
+                {
+                    if ((t - expireDate).Days > 0)
+                    {
+                        setLogT("程序已过期，请联系作者");
+                        autoB.Visible = false;
+                    }
+                }
             }
-            
-
             
 
             //if (File.Exists(System.Environment.CurrentDirectory + "\\" + "urlList"))
@@ -347,6 +350,72 @@ namespace widkeyPaperDiaper
             }
             return 1;
         }
+        /* 
+         * return success(1) or not
+         * unregular host
+         */
+        public static int weLoveMuYue(Form1 form1, string url, string method, string referer, bool allowAutoRedirect, string postData, string host)
+        {
+            while (true)
+            {
+                HttpWebRequest req = (HttpWebRequest)WebRequest.Create(url);
+                HttpWebResponse resp = null;
+                setRequest(req);
+                req.Host = host;
+                req.Method = method;
+                req.Referer = referer;
+                if (allowAutoRedirect)
+                {
+                    req.AllowAutoRedirect = true;
+                }
+                if (method.Equals("POST"))
+                {
+                    if (writePostData(form1, req, postData) < 0)
+                    {
+                        continue;
+                    }
+                }
+                string respHtml = "";
+                try
+                {
+                    resp = (HttpWebResponse)req.GetResponse();
+                }
+                catch (WebException webEx)
+                {
+                    form1.setLogT("GetResponse, " + webEx.Status.ToString());
+                    if (webEx.Status == WebExceptionStatus.ConnectionClosed)
+                    {
+                        form1.setLogT("wrong address"); //地址错误
+                    }
+                    if (webEx.Status == WebExceptionStatus.ProtocolError)
+                    {
+                        form1.setLogT("本次请求被服务器拒绝，可尝试调高间隔时间"); //500
+                    }
+                    continue;
+                }
+                if (resp != null)
+                {
+                    respHtml = resp2html(resp);
+                    if (respHtml.Equals(""))
+                    {
+                        continue;
+                    }
+                }
+                else
+                {
+                    continue;
+                }
+                if (debug)
+                {
+                    form1.setTestLog(req, respHtml);
+                }
+                gCookieContainer = req.CookieContainer.GetCookies(req.RequestUri);
+                resp.Close();
+                break;
+            }
+            return 1;
+        }
+
 
         /* 
          * return responsive HTML
@@ -555,7 +624,7 @@ namespace widkeyPaperDiaper
 
         public delegate void delegate2();
 
-        public void addIds()
+        public void addEmails()
         {
             OpenFileDialog fileDialog = new OpenFileDialog();
             fileDialog.Filter = "(*.txt)|*.txt|(*.html)|*.html";
@@ -580,9 +649,9 @@ namespace widkeyPaperDiaper
 
                         //获取用户选择的文件，并判断文件大小不能超过20K，fileInfo.Length是以字节为单位的
                         FileInfo fileInfo = new FileInfo(fileDialog.FileName);
-                        if (fileInfo.Length > 204800)
+                        if (fileInfo.Length > 504800)
                         {
-                            MessageBox.Show("上传的文件不能大于200K");
+                            MessageBox.Show("上传的文件不能大于500K");
                         }
                         else
                         {
@@ -594,14 +663,16 @@ namespace widkeyPaperDiaper
                                 {
                                     continue;
                                 }
+                                /*
                                 if ((line.Length>0 && line.Length < 4) ||!line.Substring(0, 4).Equals("1-1-"))
                                 {
                                     MessageBox.Show("文件格式错误,导入中止!");
                                     break;
                                 }
+                                */
                                 else
                                 {
-                                    urlList.Items.Add(line.Substring(4, line.Length - 4));
+                                    urlList.Items.Add(line /*.Substring(4, line.Length - 4)*/ );
                                 }
                             }
                         }
@@ -623,14 +694,20 @@ namespace widkeyPaperDiaper
                             string[] lines = File.ReadAllLines(fileDialog.SafeFileName);
                             foreach (string line in lines)
                             {
+                                /*
                                 if (!line.Substring(0, 4).Equals("1-1-"))
                                 {
                                     MessageBox.Show("文件格式错误!");
                                     break;
                                 }
+                                */
+                                if (line.Length == 0)
+                                {
+                                    continue;
+                                }
                                 else
                                 {
-                                    urlList.Items.Add(line.Substring(4, line.Length - 4));
+                                    urlList.Items.Add(line /* .Substring(4, line.Length - 4) */ );
                                 }
                             }
                         }
@@ -638,7 +715,7 @@ namespace widkeyPaperDiaper
                 }
         }
 
-        public void deleteURL()
+        public void deleteEmails()
         {
             if (urlList.InvokeRequired)
             {
@@ -659,6 +736,7 @@ namespace widkeyPaperDiaper
                 }
             }
             /*
+             * put the delete result to the file
             string strCollected = string.Empty;
             for (int i = 0; i < urlList.Items.Count; i++)
             {
@@ -677,24 +755,155 @@ namespace widkeyPaperDiaper
 
         private void addB_Click(object sender, EventArgs e)
         {
-            Thread t = new Thread(addIds);
+            Thread t = new Thread(addEmails);
             t.Start();
         }
 
         private void deleteB_Click(object sender, EventArgs e)
         {
-            Thread t = new Thread(deleteURL);
+            Thread t = new Thread(deleteEmails);
+            t.Start();
+        }
+
+        public void addDetails()
+        {
+            List<Appointment> list = new List<Appointment>();
+
+            OpenFileDialog fileDialog = new OpenFileDialog();
+            fileDialog.Filter = "(*.txt)|*.txt|(*.html)|*.html";
+
+            if (urlList.InvokeRequired)
+            {
+                delegate2 sl = new delegate2(delegate()
+                {
+                    //打开对话框, 判断用户是否正确的选择了文件
+                    if (fileDialog.ShowDialog() == DialogResult.OK)
+                    {
+                        //获取用户选择的文件，并判断文件大小不能超过20K，fileInfo.Length是以字节为单位的
+                        FileInfo fileInfo = new FileInfo(fileDialog.FileName);
+                        if (fileInfo.Length > 504800)
+                        {
+                            MessageBox.Show("上传的文件不能大于500K");
+                        }
+                        else
+                        {
+                            //在这里就可以写获取到正确文件后的代码了
+                            string[] lines = File.ReadAllLines(fileDialog.FileName);
+                            foreach (string line in lines)
+                            {
+                                if (line.Length == 0)
+                                {
+                                    continue;
+                                }
+                                else
+                                {
+                                    Regex regex = new Regex(@"( ){2,}");
+                                    string[] s = regex.Replace(line.Trim(), " ").Split(' ');
+                                    if (s.Length != 5)
+                                    {
+                                        setLogT("ignore invalid line: " + line); //500
+                                    }
+                                    list.Add(new Appointment(s[0], s[1], s[2], s[3], s[4]));
+
+                                    // urlList.Items.Add(line /*.Substring(4, line.Length - 4)*/ );
+                                }
+                            }
+                            if (list.Count > 0)
+                            {
+                                var source = new BindingSource();
+                                source.DataSource = list;
+                                dataGridView1.DataSource = source;
+                            }
+                        }
+                    }
+                });
+                urlList.Invoke(sl);
+            }
+            else //do not use delegate
+            {
+                if (fileDialog.ShowDialog() == DialogResult.OK)
+                {
+                    FileInfo fileInfo = new FileInfo(fileDialog.FileName);
+                    if (fileInfo.Length > 204800)
+                    {
+                        MessageBox.Show("上传的文件不能大于200K");
+                    }
+                    else
+                    {
+                        string[] lines = File.ReadAllLines(fileDialog.SafeFileName);
+                        foreach (string line in lines)
+                        {
+                            if (line.Length == 0)
+                            {
+                                continue;
+                            }
+                            else
+                            {
+                                Regex regex = new Regex(@"( ){2,}");
+                                string[] s = regex.Replace(line.Trim(), " ").Split(' ');
+                                if (s.Length != 5)
+                                {
+                                    setLogT("ignore invalid line: " + line); //500
+                                }
+                                list.Add(new Appointment(s[0], s[1], s[2], s[3], s[5]));
+
+                                // urlList.Items.Add(line /*.Substring(4, line.Length - 4)*/ );
+                            }
+                        }
+                        if (list.Count > 0)
+                        {
+                            var source = new BindingSource();
+                            source.DataSource = list;
+                            dataGridView1.DataSource = source;
+                            dataGridView1.
+                        }
+                    }
+                }
+            }
+
+        }
+
+        public void deleteDetails()
+        {
+            if (urlList.InvokeRequired)
+            {
+                delegate2 sl = new delegate2(delegate()
+                {
+                    for (int i = urlList.CheckedItems.Count - 1; i >= 0; i--)
+                    {
+                        urlList.Items.Remove(urlList.CheckedItems[i]);
+                    }
+                });
+                urlList.Invoke(sl);
+            }
+            else
+            {
+                for (int i = urlList.CheckedItems.Count - 1; i >= 0; i--)
+                {
+                    urlList.Items.Remove(urlList.CheckedItems[i]);
+                }
+            }
+        }
+
+        private void addDetails_Click(object sender, EventArgs e)
+        {
+            Thread t = new Thread(addDetails);
+            t.Start();
+        }
+
+        private void deleteDetails_Click(object sender, EventArgs e)
+        {
+            Thread t = new Thread(deleteDetails);
             t.Start();
         }
 
         private void button1_Click(object sender, EventArgs e)
         {
 
-
-            Mail163<PaperDiaper> paper = new Mail163<PaperDiaper>("15985830370@163.com", "dyyr7921129", this, new PaperDiaper(this), "ご注文予約案内", "???");
-            Thread t = new Thread(paper.queery);
-            t.Start();
-
+            /*
+            Mail163<PaperDiaper> paper = new Mail163<PaperDiaper>("15985830370@163.com", "dyyr7921129", this, new PaperDiaper(this), "ご注文予約案内", @"https://aksale(\s|\S)+?(?=\r)");
+            paper.queery();
+            */
 
             string pattern = @"^";
             string replacement = "1-1-";
@@ -724,6 +933,13 @@ namespace widkeyPaperDiaper
             {
                 setLogT(aa.ToString());
             }
+
+            Regex regex = new Regex(@"( ){2,}");
+            setLogT(regex.Replace("22      22", " "));
+            string[] s = regex.Replace(" abc def kkk   333 ppp ".Trim(), " ").Split(' ');
+            setLogT(s.Length.ToString());
+            
+            
         }
 
         private void textBox1_keyPress(object sender, KeyPressEventArgs e)

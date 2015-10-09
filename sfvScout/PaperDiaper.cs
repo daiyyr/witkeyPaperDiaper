@@ -22,7 +22,14 @@ namespace widkeyPaperDiaper
 
         string email = "15985830370@163.com";
         string password = "dyyr7921129";
-        string cardNo = "0123456789123";
+
+        Appointment appointment;
+
+        string cardNo = "2800048300159",
+               cardPassword = "abc123456",
+               chineseName = "崔飛飛",
+               japaneseName ="サイヒヒ",
+               phone = "090-8619-3569";
 
         public List<string> gFriends = new List<string>();
 
@@ -37,6 +44,7 @@ namespace widkeyPaperDiaper
         int successInOneProbe = 0;
         int SUMsuccessInOneProbe;
         Form1 form1;
+        string keyURL;
 
         public PaperDiaper(Form1 f)
         {
@@ -142,14 +150,14 @@ namespace widkeyPaperDiaper
             else
             {
                 form1.setLogtRed("email submitting failed: " + email);
+                return -1;
             }
 
 
-            Mail163<PaperDiaper> paper = new Mail163<PaperDiaper>(email, password, form1, this, "ご注文予約案内","???");
-            Thread t = new Thread(paper.queery);
-            t.Start();
+            Mail163<PaperDiaper> paper = new Mail163<PaperDiaper>(email, password, form1, this, "ご注文予約案内", @"https://aksale(\s|\S)+?(?=\r)");
+            keyURL = paper.queery();
 
-
+            setAppointment(email, keyURL);
 
             return 1;
         }
@@ -167,6 +175,11 @@ namespace widkeyPaperDiaper
                 false,
                 ""
                 );
+
+            if (html.Contains("本イベントは受付期間外のため、応募受付ができません"))
+            {
+                form1.setLogT("预约时间已过: " + email);
+            }
 
             if (!html.Equals("Found"))
             {
@@ -341,7 +354,8 @@ namespace widkeyPaperDiaper
                                 Thread.Sleep(100);
                             }
                         }
-                        catch(Exception e){
+                        catch (Exception)
+                        {
                             Thread.Sleep(100);
                         }
                     }
