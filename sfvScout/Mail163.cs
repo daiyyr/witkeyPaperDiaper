@@ -1,22 +1,24 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Text;
 using System.Text.RegularExpressions;
 
 namespace widkeyPaperDiaper
 {
-    class Mail163 <T>
+    public class Mail163 <T>
     {
         Form1 form1;
-        string address;
-        string password;
+        public string address;
+        public string password;
         T source;
-        string queeryTitle;
-        string contentRegex;
+        string QueeryTitle;
+        string ContentRegex;
         string sid;
         string mid;
         string target;
+        CookieCollection cookieContainer = null;
 
         bool haveLogin = false;
 
@@ -26,8 +28,14 @@ namespace widkeyPaperDiaper
             this.password = pw;
             this.form1 = f;
             this.source = source;
-            this.queeryTitle = queeryTitle;
-            this.contentRegex = contentRegex;
+            this.QueeryTitle = queeryTitle;
+            this.ContentRegex = contentRegex;
+        }
+
+        public Mail163(string add, string pw, Form1 f)
+        {
+            this.address = add;
+            this.password = pw;
         }
 
         public int login()
@@ -40,8 +48,10 @@ namespace widkeyPaperDiaper
                 "http://mail.163.com/",
                 false,
                 "savelogin=0&url2=http%3A%2F%2Fmail.163.com%2Ferrorpage%2Ferror163.htm&username="+address+"&password="+password,
-               //savelogin=0&url2=http%3A%2F%2Fmail.163.com%2Ferrorpage%2Ferror163.htm&username=15985830370&password=dyyr0125
-                "mail.163.com"
+               //savelogin=0&url2=http%3A%2F%2Fmail.163.com%2Ferrorpage%2Ferror163.htm&username=15985830370&password=?
+               ref cookieContainer,
+                "mail.163.com",
+                true
                 );
 
             if( Regex.Match(html, @"<html><head><script type=""text/javascript"">window.location.href = ""http://mail.163.com/errorpage/error163").Success){
@@ -65,8 +75,9 @@ namespace widkeyPaperDiaper
                 "http://mail.163.com/",
                 false,
                 "",
-                //savelogin=0&url2=http%3A%2F%2Fmail.163.com%2Ferrorpage%2Ferror163.htm&username=15985830370&password=dyyr0125
-                "hwwebmail.mail.163.com"
+               ref  cookieContainer,
+                "hwwebmail.mail.163.com",
+                true
                 );
 /*
             if (html.Contains("网易邮箱6.0版"))
@@ -98,8 +109,16 @@ namespace widkeyPaperDiaper
             return 1;
         }
 
-        public string queery()
+        public string queery(string queeryTitle, string contentRegex)
         {
+            if (queeryTitle == null || queeryTitle == "")
+            {
+                queeryTitle = QueeryTitle;
+            }
+            if (contentRegex == null || contentRegex == "")
+            {
+                contentRegex = ContentRegex;
+            }
             if (!haveLogin)
             {
                 login();
@@ -123,7 +142,10 @@ namespace widkeyPaperDiaper
                     + "%3Cboolean%20name%3D%22skipLockedFolders%22%3Etrue%3C%2Fboolean%3E%3Cboolean%20name%3D%22returnTag%22"
                     + "%3Etrue%3C%2Fboolean%3E%3Cboolean%20name%3D%22returnTotal%22%3Etrue%3C%2Fboolean%3E%3C%2Fobject%3E",
 
-                    "hwwebmail.mail.163.com"
+               ref  cookieContainer,
+
+                    "hwwebmail.mail.163.com",
+                true
                     );
 
                 if (html.Contains("<string name=\"subject\">"+queeryTitle+"</string>"))
@@ -167,7 +189,9 @@ namespace widkeyPaperDiaper
                     "http://hwwebmail.mail.163.com/js6/main.jsp?sid=" + sid + "&df=mail163_letter",
                     false,
                     "",
-                    "hwwebmail.mail.163.com"
+               ref cookieContainer,
+                    "hwwebmail.mail.163.com",
+                true
                     );
 
 

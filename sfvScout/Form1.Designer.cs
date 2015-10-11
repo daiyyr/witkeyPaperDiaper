@@ -28,6 +28,7 @@
         /// </summary>
         private void InitializeComponent()
         {
+            this.components = new System.ComponentModel.Container();
             this.loginB = new System.Windows.Forms.Button();
             this.autoB = new System.Windows.Forms.Button();
             this.label1 = new System.Windows.Forms.Label();
@@ -36,10 +37,9 @@
             this.label3 = new System.Windows.Forms.Label();
             this.logT = new System.Windows.Forms.RichTextBox();
             this.addB = new System.Windows.Forms.Button();
-            this.deleteB = new System.Windows.Forms.Button();
+            this.deleteMail = new System.Windows.Forms.Button();
             this.inputT = new System.Windows.Forms.TextBox();
             this.label4 = new System.Windows.Forms.Label();
-            this.urlList = new System.Windows.Forms.CheckedListBox();
             this.testLog = new System.Windows.Forms.RichTextBox();
             this.textBox1 = new System.Windows.Forms.TextBox();
             this.label5 = new System.Windows.Forms.Label();
@@ -47,16 +47,28 @@
             this.label6 = new System.Windows.Forms.Label();
             this.button2 = new System.Windows.Forms.Button();
             this.button3 = new System.Windows.Forms.Button();
-            this.button4 = new System.Windows.Forms.Button();
+            this.deleteApp = new System.Windows.Forms.Button();
             this.label7 = new System.Windows.Forms.Label();
             this.label8 = new System.Windows.Forms.Label();
-            this.dataGridView1 = new System.Windows.Forms.DataGridView();
-            this.cardNumber = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.password = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.chineseName = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.japaneseName = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.phone = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            ((System.ComponentModel.ISupportInitialize)(this.dataGridView1)).BeginInit();
+            this.appointmentGrid = new System.Windows.Forms.DataGridView();
+            this.pictureBox1 = new System.Windows.Forms.PictureBox();
+            this.label9 = new System.Windows.Forms.Label();
+            this.textBox2 = new System.Windows.Forms.TextBox();
+            this.mailGrid = new System.Windows.Forms.DataGridView();
+            this.cardNoDataGridViewTextBoxColumn = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.cardPasswordDataGridViewTextBoxColumn = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.chineseNameDataGridViewTextBoxColumn = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.japaneseNameDataGridViewTextBoxColumn = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.phoneDataGridViewTextBoxColumn = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.appointmentBindingSource2 = new System.Windows.Forms.BindingSource(this.components);
+            this.appointmentBindingSource = new System.Windows.Forms.BindingSource(this.components);
+            this.appointmentBindingSource1 = new System.Windows.Forms.BindingSource(this.components);
+            ((System.ComponentModel.ISupportInitialize)(this.appointmentGrid)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.mailGrid)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.appointmentBindingSource2)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.appointmentBindingSource)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.appointmentBindingSource1)).BeginInit();
             this.SuspendLayout();
             // 
             // loginB
@@ -130,7 +142,7 @@
             // 
             // addB
             // 
-            this.addB.Location = new System.Drawing.Point(450, 91);
+            this.addB.Location = new System.Drawing.Point(412, 156);
             this.addB.Name = "addB";
             this.addB.Size = new System.Drawing.Size(76, 25);
             this.addB.TabIndex = 5;
@@ -138,15 +150,15 @@
             this.addB.UseVisualStyleBackColor = true;
             this.addB.Click += new System.EventHandler(this.addB_Click);
             // 
-            // deleteB
+            // deleteMail
             // 
-            this.deleteB.Location = new System.Drawing.Point(541, 91);
-            this.deleteB.Name = "deleteB";
-            this.deleteB.Size = new System.Drawing.Size(76, 25);
-            this.deleteB.TabIndex = 6;
-            this.deleteB.Text = "delete";
-            this.deleteB.UseVisualStyleBackColor = true;
-            this.deleteB.Click += new System.EventHandler(this.deleteB_Click);
+            this.deleteMail.Location = new System.Drawing.Point(503, 156);
+            this.deleteMail.Name = "deleteMail";
+            this.deleteMail.Size = new System.Drawing.Size(76, 25);
+            this.deleteMail.TabIndex = 6;
+            this.deleteMail.Text = "delete";
+            this.deleteMail.UseVisualStyleBackColor = true;
+            this.deleteMail.Click += new System.EventHandler(this.deleteB_Click);
             // 
             // inputT
             // 
@@ -166,14 +178,6 @@
             this.label4.TabIndex = 14;
             this.label4.Text = "username:";
             this.label4.Visible = false;
-            // 
-            // urlList
-            // 
-            this.urlList.FormattingEnabled = true;
-            this.urlList.Location = new System.Drawing.Point(450, 122);
-            this.urlList.Name = "urlList";
-            this.urlList.Size = new System.Drawing.Size(197, 84);
-            this.urlList.TabIndex = 7;
             // 
             // testLog
             // 
@@ -207,7 +211,7 @@
             // 
             // button1
             // 
-            this.button1.Location = new System.Drawing.Point(234, 149);
+            this.button1.Location = new System.Drawing.Point(529, 12);
             this.button1.Name = "button1";
             this.button1.Size = new System.Drawing.Size(50, 32);
             this.button1.TabIndex = 18;
@@ -245,15 +249,15 @@
             this.button3.UseVisualStyleBackColor = true;
             this.button3.Click += new System.EventHandler(this.addDetails_Click);
             // 
-            // button4
+            // deleteApp
             // 
-            this.button4.Location = new System.Drawing.Point(107, 156);
-            this.button4.Name = "button4";
-            this.button4.Size = new System.Drawing.Size(76, 25);
-            this.button4.TabIndex = 6;
-            this.button4.Text = "delete";
-            this.button4.UseVisualStyleBackColor = true;
-            this.button4.Click += new System.EventHandler(this.deleteDetails_Click);
+            this.deleteApp.Location = new System.Drawing.Point(107, 156);
+            this.deleteApp.Name = "deleteApp";
+            this.deleteApp.Size = new System.Drawing.Size(76, 25);
+            this.deleteApp.TabIndex = 6;
+            this.deleteApp.Text = "delete";
+            this.deleteApp.UseVisualStyleBackColor = true;
+            this.deleteApp.Click += new System.EventHandler(this.deleteDetails_Click);
             // 
             // label7
             // 
@@ -267,58 +271,119 @@
             // label8
             // 
             this.label8.AutoSize = true;
-            this.label8.Location = new System.Drawing.Point(453, 76);
+            this.label8.Location = new System.Drawing.Point(415, 141);
             this.label8.Name = "label8";
             this.label8.Size = new System.Drawing.Size(47, 12);
             this.label8.TabIndex = 21;
             this.label8.Text = "emails:";
             // 
-            // dataGridView1
+            // appointmentGrid
             // 
-            this.dataGridView1.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            this.dataGridView1.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] {
-            this.cardNumber,
-            this.password,
-            this.chineseName,
-            this.japaneseName,
-            this.phone});
-            this.dataGridView1.Location = new System.Drawing.Point(18, 187);
-            this.dataGridView1.Name = "dataGridView1";
-            this.dataGridView1.RowTemplate.Height = 23;
-            this.dataGridView1.Size = new System.Drawing.Size(387, 228);
-            this.dataGridView1.TabIndex = 24;
+            this.appointmentGrid.AutoGenerateColumns = false;
+            this.appointmentGrid.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            this.appointmentGrid.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] {
+            this.cardNoDataGridViewTextBoxColumn,
+            this.cardPasswordDataGridViewTextBoxColumn,
+            this.chineseNameDataGridViewTextBoxColumn,
+            this.japaneseNameDataGridViewTextBoxColumn,
+            this.phoneDataGridViewTextBoxColumn});
+            this.appointmentGrid.DataSource = this.appointmentBindingSource2;
+            this.appointmentGrid.Location = new System.Drawing.Point(18, 187);
+            this.appointmentGrid.Name = "appointmentGrid";
+            this.appointmentGrid.RowTemplate.Height = 23;
+            this.appointmentGrid.Size = new System.Drawing.Size(387, 228);
+            this.appointmentGrid.TabIndex = 24;
             // 
-            // cardNumber
+            // pictureBox1
             // 
-            this.cardNumber.HeaderText = "cardNumber";
-            this.cardNumber.Name = "cardNumber";
+            this.pictureBox1.Location = new System.Drawing.Point(44, 67);
+            this.pictureBox1.Name = "pictureBox1";
+            this.pictureBox1.Size = new System.Drawing.Size(240, 71);
+            this.pictureBox1.TabIndex = 25;
+            this.pictureBox1.TabStop = false;
             // 
-            // password
+            // label9
             // 
-            this.password.HeaderText = "password";
-            this.password.Name = "password";
+            this.label9.AutoSize = true;
+            this.label9.Location = new System.Drawing.Point(306, 108);
+            this.label9.Name = "label9";
+            this.label9.Size = new System.Drawing.Size(41, 12);
+            this.label9.TabIndex = 26;
+            this.label9.Text = "label9";
             // 
-            // chineseName
+            // textBox2
             // 
-            this.chineseName.HeaderText = "chineseName";
-            this.chineseName.Name = "chineseName";
+            this.textBox2.Location = new System.Drawing.Point(290, 76);
+            this.textBox2.Name = "textBox2";
+            this.textBox2.Size = new System.Drawing.Size(100, 21);
+            this.textBox2.TabIndex = 27;
             // 
-            // japaneseName
+            // mailGrid
             // 
-            this.japaneseName.HeaderText = "japaneseName";
-            this.japaneseName.Name = "japaneseName";
+            this.mailGrid.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            this.mailGrid.Location = new System.Drawing.Point(411, 187);
+            this.mailGrid.Name = "mailGrid";
+            this.mailGrid.RowTemplate.Height = 23;
+            this.mailGrid.Size = new System.Drawing.Size(249, 228);
+            this.mailGrid.TabIndex = 24;
             // 
-            // phone
+            // cardNoDataGridViewTextBoxColumn
             // 
-            this.phone.HeaderText = "phone";
-            this.phone.Name = "phone";
+            this.cardNoDataGridViewTextBoxColumn.DataPropertyName = "CardNo";
+            this.cardNoDataGridViewTextBoxColumn.HeaderText = "CardNo";
+            this.cardNoDataGridViewTextBoxColumn.Name = "cardNoDataGridViewTextBoxColumn";
+            this.cardNoDataGridViewTextBoxColumn.ReadOnly = true;
+            // 
+            // cardPasswordDataGridViewTextBoxColumn
+            // 
+            this.cardPasswordDataGridViewTextBoxColumn.DataPropertyName = "CardPassword";
+            this.cardPasswordDataGridViewTextBoxColumn.HeaderText = "CardPassword";
+            this.cardPasswordDataGridViewTextBoxColumn.Name = "cardPasswordDataGridViewTextBoxColumn";
+            this.cardPasswordDataGridViewTextBoxColumn.ReadOnly = true;
+            // 
+            // chineseNameDataGridViewTextBoxColumn
+            // 
+            this.chineseNameDataGridViewTextBoxColumn.DataPropertyName = "ChineseName";
+            this.chineseNameDataGridViewTextBoxColumn.HeaderText = "ChineseName";
+            this.chineseNameDataGridViewTextBoxColumn.Name = "chineseNameDataGridViewTextBoxColumn";
+            this.chineseNameDataGridViewTextBoxColumn.ReadOnly = true;
+            // 
+            // japaneseNameDataGridViewTextBoxColumn
+            // 
+            this.japaneseNameDataGridViewTextBoxColumn.DataPropertyName = "JapaneseName";
+            this.japaneseNameDataGridViewTextBoxColumn.HeaderText = "JapaneseName";
+            this.japaneseNameDataGridViewTextBoxColumn.Name = "japaneseNameDataGridViewTextBoxColumn";
+            this.japaneseNameDataGridViewTextBoxColumn.ReadOnly = true;
+            // 
+            // phoneDataGridViewTextBoxColumn
+            // 
+            this.phoneDataGridViewTextBoxColumn.DataPropertyName = "Phone";
+            this.phoneDataGridViewTextBoxColumn.HeaderText = "Phone";
+            this.phoneDataGridViewTextBoxColumn.Name = "phoneDataGridViewTextBoxColumn";
+            this.phoneDataGridViewTextBoxColumn.ReadOnly = true;
+            // 
+            // appointmentBindingSource2
+            // 
+            this.appointmentBindingSource2.DataSource = typeof(widkeyPaperDiaper.Appointment);
+            // 
+            // appointmentBindingSource
+            // 
+            this.appointmentBindingSource.DataSource = typeof(widkeyPaperDiaper.Appointment);
+            // 
+            // appointmentBindingSource1
+            // 
+            this.appointmentBindingSource1.DataSource = typeof(widkeyPaperDiaper.Appointment);
             // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(1029, 458);
-            this.Controls.Add(this.dataGridView1);
+            this.Controls.Add(this.textBox2);
+            this.Controls.Add(this.label9);
+            this.Controls.Add(this.pictureBox1);
+            this.Controls.Add(this.mailGrid);
+            this.Controls.Add(this.appointmentGrid);
             this.Controls.Add(this.label8);
             this.Controls.Add(this.label7);
             this.Controls.Add(this.button2);
@@ -326,13 +391,12 @@
             this.Controls.Add(this.button1);
             this.Controls.Add(this.textBox1);
             this.Controls.Add(this.testLog);
-            this.Controls.Add(this.urlList);
             this.Controls.Add(this.label5);
             this.Controls.Add(this.label4);
-            this.Controls.Add(this.button4);
+            this.Controls.Add(this.deleteApp);
             this.Controls.Add(this.inputT);
             this.Controls.Add(this.button3);
-            this.Controls.Add(this.deleteB);
+            this.Controls.Add(this.deleteMail);
             this.Controls.Add(this.addB);
             this.Controls.Add(this.label3);
             this.Controls.Add(this.label2);
@@ -343,7 +407,12 @@
             this.Controls.Add(this.loginB);
             this.Name = "Form1";
             this.Text = "PaperDiaperBooker";
-            ((System.ComponentModel.ISupportInitialize)(this.dataGridView1)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.appointmentGrid)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.mailGrid)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.appointmentBindingSource2)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.appointmentBindingSource)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.appointmentBindingSource1)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -359,10 +428,9 @@
         private System.Windows.Forms.Label label3;
         private  System.Windows.Forms.RichTextBox logT;
         private System.Windows.Forms.Button addB;
-        public  System.Windows.Forms.Button deleteB;
+        public  System.Windows.Forms.Button deleteMail;
         public  System.Windows.Forms.TextBox inputT;
         private System.Windows.Forms.Label label4;
-        public  System.Windows.Forms.CheckedListBox urlList;
         private  System.Windows.Forms.RichTextBox testLog;
         public  System.Windows.Forms.TextBox textBox1;
         private System.Windows.Forms.Label label5;
@@ -370,15 +438,22 @@
         private System.Windows.Forms.Label label6;
         private System.Windows.Forms.Button button2;
         private System.Windows.Forms.Button button3;
-        public System.Windows.Forms.Button button4;
+        public System.Windows.Forms.Button deleteApp;
         private System.Windows.Forms.Label label7;
         private System.Windows.Forms.Label label8;
-        private System.Windows.Forms.DataGridView dataGridView1;
-        private System.Windows.Forms.DataGridViewTextBoxColumn cardNumber;
-        private System.Windows.Forms.DataGridViewTextBoxColumn password;
-        private System.Windows.Forms.DataGridViewTextBoxColumn chineseName;
-        private System.Windows.Forms.DataGridViewTextBoxColumn japaneseName;
-        private System.Windows.Forms.DataGridViewTextBoxColumn phone;
+        public System.Windows.Forms.DataGridView appointmentGrid;
+        public System.Windows.Forms.PictureBox pictureBox1;
+        public System.Windows.Forms.Label label9;
+        public System.Windows.Forms.TextBox textBox2;
+        private System.Windows.Forms.BindingSource appointmentBindingSource;
+        private System.Windows.Forms.BindingSource appointmentBindingSource2;
+        private System.Windows.Forms.BindingSource appointmentBindingSource1;
+        private System.Windows.Forms.DataGridViewTextBoxColumn cardNoDataGridViewTextBoxColumn;
+        private System.Windows.Forms.DataGridViewTextBoxColumn cardPasswordDataGridViewTextBoxColumn;
+        private System.Windows.Forms.DataGridViewTextBoxColumn chineseNameDataGridViewTextBoxColumn;
+        private System.Windows.Forms.DataGridViewTextBoxColumn japaneseNameDataGridViewTextBoxColumn;
+        private System.Windows.Forms.DataGridViewTextBoxColumn phoneDataGridViewTextBoxColumn;
+        public System.Windows.Forms.DataGridView mailGrid;
     }
 }
 

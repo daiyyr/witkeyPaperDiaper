@@ -20,35 +20,29 @@ namespace widkeyPaperDiaper
         static string rgx;
         static Match myMatch;
 
-        string email = "15985830370@163.com";
-        string password = "dyyr7921129";
+        int threadNo = 0;
+        string verificationCode;
+        CookieCollection cookieContainer = null;
 
+        Mail163<PaperDiaper> mail;
         Appointment appointment;
 
-        string cardNo = "2800048300159",
-               cardPassword = "abc123456",
-               chineseName = "崔飛飛",
-               japaneseName ="サイヒヒ",
-               phone = "090-8619-3569";
+
 
         public List<string> gFriends = new List<string>();
 
         string gFileName = null;
-        string collection_token = "";
-        string cursor = "";
-        string profile_id = "";
-        string user_id = "";
+
         string eventId = "";
-        int succeed = 0;
-        int failed = 0;
-        int successInOneProbe = 0;
-        int SUMsuccessInOneProbe;
         Form1 form1;
         string keyURL;
+        bool requireVeriCode = false;
 
-        public PaperDiaper(Form1 f)
+        public PaperDiaper(Form1 f, Appointment app, Mail163<PaperDiaper> em)
         {
             form1 = f;
+            appointment = app;
+            mail = em;
         }
 
         public int writeResult(string content)
@@ -68,19 +62,17 @@ namespace widkeyPaperDiaper
 
 
 
-        public int probe(string county)
+        public int probe(string prefecture, string county)
         {
             form1.setLogT("probe " + county + "..");
 
             string respHtml = Form1.weLoveYue(
                 form1,
-                "http://aksale.advs.jp/cp/akachan_sale_pc/search_event_list.cgi?area2=%92%b7%96%ec%8c%a7&event_type=6&sid=37194&kmws=",
-                //上田县 M
-            //   http://aksale.advs.jp/cp/akachan_sale_pc/search_event_list.cgi?area2=%92%b7%96%ec%8c%a7&event_type=6&sid=37196&kmws=
-            //songben M
-                //   http://aksale.advs.jp/cp/akachan_sale_pc/search_event_list.cgi?area2=%92%b7%96%ec%8c%a7&event_type=6&sid="+ county +"&kmws=
+                "http://aksale.advs.jp/cp/akachan_sale_pc/search_event_list.cgi?area2=" + prefecture + "&event_type=6&sid=" + county + "&kmws=",
 
-                "GET", "", false, "");
+                "GET", "", false, "", ref  cookieContainer,
+                false
+                );
 
 
 
@@ -90,7 +82,8 @@ namespace widkeyPaperDiaper
                 return -1;
             }
 
-            rgx = @"<input type=""submit"" name=""sbmt"" value=""予約"" >";
+            //       <input type="submit" name="sbmt" value="予約" >
+            rgx = @"<input type=""submit"" name=""sbmt"" value=""";
             myMatch = (new Regex(rgx)).Match(respHtml);
             if (!myMatch.Success)
             {
@@ -98,69 +91,241 @@ namespace widkeyPaperDiaper
                 return -5;// no available appointment
             }
 
-            rgx = @"(?<=\[\]\,{""eventId"":)\d+?(?=\,)";
+            if (respHtml.Contains("eventId"))
+            {
+                rgx = @"(?<=\[\]\,{""eventId"":)\d+?(?=\,)";  //there will be no veri code
+                requireVeriCode = false;
+            }
+            else
+            {
+                rgx = @"(?<=event_id"" value="")\d+?(?="")";  //there will be a veri code, and we can cheeck up with captcha
+                //name="event_id" value="2543729870"
+                requireVeriCode = true;
+            }
             myMatch = (new Regex(rgx)).Match(respHtml);
             if (myMatch.Success)
             {
                 eventId = myMatch.Groups[0].Value;
             }
 
-            /*
-            rgx = @"(?<=name=""event_id"" value="")\d+?(?="")";
-            myMatch = (new Regex(rgx)).Match(respHtml);
-            if (myMatch.Success)
+            if (1 == 1)//     !respHtml.Contains("captcha")   daiyyr
             {
-                collection_token = myMatch.Groups[0].Value;
+                // jump to verification
             }
-            collection_token = Form1.ToUrlEncode(collection_token);
-
-            rgx = @"^\d+(?=\%)";
-            myMatch = (new Regex(rgx)).Match(collection_token);
-            if (myMatch.Success)
+            else
             {
-                profile_id = myMatch.Groups[0].Value;
-            }
-            */
 
+                //post eventId to get the verification code page
+                respHtml = Form1.weLoveYue(
+                form1,
+                "http://aksale.advs.jp/cp/akachan_sale_pc/captcha.cgi",
+                "POST", 
+                "http://aksale.advs.jp/cp/akachan_sale_pc/search_event_list.cgi?area2=" + county + "&event_type=6&sid=37194&kmws=", 
+                false,
+                "sbmt=%97%5C%96%F1&event_id=2543729870&event_type=6",
+               ref  cookieContainer,
+                false
+                );
+
+
+                //show verification code
+
+                //<img src="./captcha/144445570520561.jpeg" alt="画像認証" /><br />
+                //http://aksale.advs.jp/cp/akachan_sale_pc/captcha/144445570520561.jpeg
+
+                string cCodeGuid = "";
+                rgx = @"(?<=img src=""\./captcha/)\d+?(?=\.jpeg)";
+                myMatch = (new Regex(rgx)).Match(respHtml);
+                if (myMatch.Success)
+                {
+                    cCodeGuid = myMatch.Groups[0].Value;
+                }
+                lock (form1.pictureBox1)
+                {
+                    
+                    if (form1.textBox2.InvokeRequired)
+                    {
+                        delegate2 sl = new delegate2(delegate()
+                        {
+                            form1.pictureBox1.ImageLocation = @"http://aksale.advs.jp/cp/akachan_sale_pc/captcha/" + cCodeGuid + ".jpeg";
+                            form1.textBox2.Text = "";
+                            form1.textBox2.ReadOnly = false;
+                            form1.textBox2.Focus();
+                            form1.label9.Text = "线程" + threadNo.ToString() + ":请输入验证码";
+                            form1.label9.Visible = true;
+                        });
+                        form1.textBox2.Invoke(sl);
+                    }
+                    else
+                    {
+                        form1.pictureBox1.ImageLocation = @"http://aksale.advs.jp/cp/akachan_sale_pc/captcha/" + cCodeGuid + ".jpeg";
+                        form1.textBox2.Text = "";
+                        form1.textBox2.ReadOnly = false;
+                        form1.textBox2.Focus();
+                        form1.label9.Text = "线程" + threadNo.ToString() + ":请输入验证码";
+                        form1.label9.Visible = true;
+                    }
+
+                    while (form1.textBox2.Text.Length < 5)
+                    {
+                        Thread.Sleep(30);
+                    }
+
+                    verificationCode = form1.textBox2.Text.Substring(0, 5);
+                    if (form1.textBox2.InvokeRequired)
+                    {
+                        delegate2 sl = new delegate2(delegate()
+                        {
+                            form1.textBox2.ReadOnly = true;
+                            form1.label9.Visible = false;
+                        });
+                        form1.textBox2.Invoke(sl);
+                    }
+                    else
+                    {
+                        form1.textBox2.ReadOnly = true;
+                        form1.label9.Visible = false;
+                    }
+                }// end of lock picturebox1
+
+                
+                //submit the veri code
+                respHtml = Form1.weLoveYue(
+                form1,
+                "http://aksale.advs.jp/cp/akachan_sale_pc/_mail.cgi",
+                "POST",
+                "http://aksale.advs.jp/cp/akachan_sale_pc/captcha.cgi",
+                false,
+                "input_captcha=" + verificationCode + "&sbmt=%8E%9F%82%D6&event_id="+eventId+"&event_type=6",
+               ref  cookieContainer,
+                false
+                );
+            
+
+
+
+                while (respHtml.Contains("captcha"))
+                {
+                    form1.setLogT("验证码错误！请重新输入");
+                    rgx = @"(?<=img src=""\./captcha/)\d+?(?=\.jpeg)";
+                    myMatch = (new Regex(rgx)).Match(respHtml);
+                    if (myMatch.Success)
+                    {
+                        cCodeGuid = myMatch.Groups[0].Value;
+                    }
+                    lock (form1.pictureBox1)
+                    {
+
+                        if (form1.textBox2.InvokeRequired)
+                        {
+                            delegate2 sl = new delegate2(delegate()
+                            {
+                                form1.pictureBox1.ImageLocation = @"http://aksale.advs.jp/cp/akachan_sale_pc/captcha/" + cCodeGuid + ".jpeg";
+                                form1.textBox2.Text = "";
+                                form1.textBox2.ReadOnly = false;
+                                form1.textBox2.Focus();
+                                form1.label9.Text = "线程" + threadNo.ToString() + ":请输入验证码";
+                                form1.label9.Visible = true;
+                            });
+                            form1.textBox2.Invoke(sl);
+                        }
+                        else
+                        {
+                            form1.pictureBox1.ImageLocation = @"http://aksale.advs.jp/cp/akachan_sale_pc/captcha/" + cCodeGuid + ".jpeg";
+                            form1.textBox2.Text = "";
+                            form1.textBox2.ReadOnly = false;
+                            form1.textBox2.Focus();
+                            form1.label9.Text = "线程" + threadNo.ToString() + ":请输入验证码";
+                            form1.label9.Visible = true;
+                        }
+
+                        while (form1.textBox2.Text.Length < 5)
+                        {
+                            Thread.Sleep(30);
+                        }
+
+                        verificationCode = form1.textBox2.Text.Substring(0, 5);
+                        if (form1.textBox2.InvokeRequired)
+                        {
+                            delegate2 sl = new delegate2(delegate()
+                            {
+                                form1.textBox2.ReadOnly = true;
+                                form1.label9.Visible = false;
+                            });
+                            form1.textBox2.Invoke(sl);
+                        }
+                        else
+                        {
+                            form1.textBox2.ReadOnly = true;
+                            form1.label9.Visible = false;
+                        }
+                    }// end of lock picturebox1
+
+                    //submit the veri code
+                    respHtml = Form1.weLoveYue(
+                    form1,
+                    "http://aksale.advs.jp/cp/akachan_sale_pc/_mail.cgi",
+                    "POST",
+                    "http://aksale.advs.jp/cp/akachan_sale_pc/captcha.cgi",
+                    false,
+                    "input_captcha=" + verificationCode + "&sbmt=%8E%9F%82%D6&event_id=" + eventId + "&event_type=6",
+                    ref cookieContainer,
+                    false
+                );
+                
+                }//end of while wrong code 
+            }//end of if need vervification code
+
+
+            //post email
             Form1.weLoveMuYue(
                 form1,
                 "https://aksale.advs.jp/cp/akachan_sale_pc/mail_form.cgi"
                 ,
-                "POST", 
-                "http://aksale.advs.jp/cp/akachan_sale_pc/_mail.cgi?sbmt=%97%5C%96%F1&event_id=7938283049&event_type=6",
+                "POST",
+                requireVeriCode ? "http://aksale.advs.jp/cp/akachan_sale_pc/_mail.cgi" :
+                ("http://aksale.advs.jp/cp/akachan_sale_pc/_mail.cgi?sbmt=%97%5C%96%F1&event_id="+eventId+"&event_type=6")
+                ,
                 false, 
-                "mail1="+email.Replace("@","%40")+"&mail2="+email.Replace("@","%40")+"&sbmt=%8E%9F%82%D6&event_id="+eventId+"&event_type=6"
+                "mail1="+mail.address.Replace("@","%40")+"&mail2="+mail.address.Replace("@","%40")+"&sbmt=%8E%9F%82%D6&event_id="+eventId+"&event_type=6",
           //    "mail1=15985830370%40163.com&mail2=15985830370%40163.com&sbmt=%8E%9F%82%D6&event_id=5393381489&event_type=6"
+                ref cookieContainer
                 );
 
-          string html =  Form1.weLoveYue(
+            respHtml = Form1.weLoveYue(
                 form1,
                 "https://aksale.advs.jp/cp/akachan_sale_pc/mail_confirm.cgi"
                 ,
                 "POST", 
                 "https://aksale.advs.jp/cp/akachan_sale_pc/mail_form.cgi",
-                false, 
-                "sbmt=%91%97%90M&mail1="+email.Replace("@","%2540").Replace(".","%252e")+"&mail2="+email.Replace("@","%2540").Replace(".","%252e")+"&event_id="+eventId+"&event_type=6"
+                false,
+                "sbmt=%91%97%90M&mail1=" + mail.address.Replace("@", "%2540").Replace(".", "%252e") + "&mail2=" + mail.address.Replace("@", "%2540").Replace(".", "%252e") + "&event_id=" + eventId + "&event_type=6",
           //    sbmt=%91%97%90M&mail1=15985830370%2540163%252ecom&mail2=15985830370%2540163%252ecom&event_id=7938283049&event_type=6
-                );
+                ref cookieContainer,
+                false
+          );
+
             
-            if(html.Contains("下記メールアドレスにメールを送信しました")){
-                form1.setLogtRed("step1 succeed, checking email: " + email);
+            if (respHtml.Contains("下記メールアドレスにメールを送信しました"))
+            {               
+                form1.setLogtRed("step1 succeed, checking email: " + mail.address);
             }
             else
             {
-                form1.setLogtRed("email submitting failed: " + email);
+                form1.setLogtRed("email submitting failed: " + mail.address);
                 return -1;
             }
 
 
-            Mail163<PaperDiaper> paper = new Mail163<PaperDiaper>(email, password, form1, this, "ご注文予約案内", @"https://aksale(\s|\S)+?(?=\r)");
-            keyURL = paper.queery();
+            keyURL = mail.queery("ご注文予約案内", @"https://aksale(\s|\S)+?(?=\r)");
 
-            setAppointment(email, keyURL);
+            setAppointment(mail.address, keyURL);
 
             return 1;
         }
+
+
+
 
         public int setAppointment(string email, string url){
 
@@ -173,13 +338,11 @@ namespace widkeyPaperDiaper
                 "GET",
                 "https://aksale.advs.jp/cp/akachan_sale_pc/mail_form.cgi",
                 false,
-                ""
+                "",
+                ref cookieContainer,
+                false
                 );
 
-            if (html.Contains("本イベントは受付期間外のため、応募受付ができません"))
-            {
-                form1.setLogT("预约时间已过: " + email);
-            }
 
             if (!html.Equals("Found"))
             {
@@ -194,11 +357,47 @@ namespace widkeyPaperDiaper
                 "POST", 
                 "https://aksale.advs.jp/cp/akachan_sale_pc/mail_form.cgi",
                 false,
-                "card_no="+cardNo+"&sbmt=%8E%9F%82%D6"
+                "card_no=" + appointment.CardNo + "&sbmt=%8E%9F%82%D6",
+                ref cookieContainer,
+                false
+                );
+                               
+            if (html.Contains("恐れ入りますが、もう一度最初から操作してください"))
+            {
+                form1.setLogT("no available quota, url from: " + email);
+                return -2;
+            }
+
+            html = Form1.weLoveYue(
+                form1,
+                "https://aksale.advs.jp/cp/akachan_sale_pc/reg_form_event_1.cgi"
+                ,
+                "POST",
+                "https://aksale.advs.jp/cp/akachan_sale_pc/form_card_no.cgi",
+                false,
+                "password="+appointment.CardPassword
+                +"&sei=%9B%C1&mei=%94%F2%94%F2&sei_kana=%83T&mei_kana=%83C%83q%83q&tel1=090&tel2=8619&tel3=3569"//daiyyr
+                //chinese charocter's length is also 1
+                +"&sbmt=%8E%9F%82%D6",
+                ref cookieContainer,
+                false
                 );
 
-
-
+            html = Form1.weLoveYue(
+                form1,
+                "https://aksale.advs.jp/cp/akachan_sale_pc/reg_confirm_event.cgi"
+                ,
+                "POST",
+                "https://aksale.advs.jp/cp/akachan_sale_pc/reg_form_event_1.cgi",
+                false,
+                "sbmt=%91%97%90M",
+                ref cookieContainer,
+                false
+                );
+            
+            if(html.Contains("ご予約ありがとうございます")){
+                form1.setLogT("Setting appointment succeed!");
+            }
 
             return 1;
         }
@@ -209,62 +408,21 @@ namespace widkeyPaperDiaper
 
         public void startProbe()
         {
-            if (form1.urlList.InvokeRequired)
+            if (form1.mailGrid.InvokeRequired)
             {
                 delegate2 sl = new delegate2(delegate()
                 {
-                    form1.deleteB.Enabled = false;
+                    form1.deleteMail.Enabled = false;
+                    form1.deleteApp.Enabled = false;
                 });
-                form1.urlList.Invoke(sl);
+                form1.mailGrid.Invoke(sl);
             }
             else
             {
-                form1.deleteB.Enabled = false;
+                form1.deleteMail.Enabled = false;
+                form1.deleteApp.Enabled = false;
             }
-            /*
-            if (form1.urlList.Items.Count == 0)
-            {
-                form1.setLogT("empty user list! please import a userID file");
-                if (form1.urlList.InvokeRequired)
-                {
-                    delegate2 sl = new delegate2(delegate()
-                    {
-                        form1.deleteB.Enabled = true;
-                    });
-                    form1.urlList.Invoke(sl);
-                }
-                else
-                {
-                    form1.deleteB.Enabled = true;
-                }
-                Form1.gForceToStop = false;
-                return;
-            }
-             
-            Login login = new Login(form1) { };
-
-            if (!Form1.gLoginOkFlag)
-            {
-                login.loginT();
-                if (!Form1.gLoginOkFlag)
-                {
-                    if (form1.urlList.InvokeRequired)
-                    {
-                        delegate2 sl = new delegate2(delegate()
-                        {
-                            form1.deleteB.Enabled = true;
-                        });
-                        form1.urlList.Invoke(sl);
-                    }
-                    else
-                    {
-                        form1.deleteB.Enabled = true;
-                    }
-                    Form1.gForceToStop = false;
-                    return;
-                }
-            }
-            * */
+            
             form1.setLogT("开始扫描..");
             while (true)
             {
@@ -273,118 +431,66 @@ namespace widkeyPaperDiaper
                     break;
                 }
 
-    //            for (int i = 0; i < form1.urlList.Items.Count; i++)
-    //            {
-                    int r1 = 0;
-    //                while ((r1 = this.probe(form1.urlList.GetItemText(form1.urlList.Items[i]))) == -1)
-                    while ((r1 = this.probe("") )== -1)
-                    {
-            /*          Form1.gLoginOkFlag = false;
-                        login.loginT();
-                        if (!Form1.gLoginOkFlag)
-                        {
-                            if (form1.urlList.InvokeRequired)
-                            {
-                                delegate2 sl = new delegate2(delegate()
-                                {
-                                    form1.deleteB.Enabled = true;
-                                });
-                                form1.urlList.Invoke(sl);
-                            }
-                            else
-                            {
-                                form1.deleteB.Enabled = true;
-                            }
-                            Form1.gForceToStop = false;
-                            return;
-                        }
-             */ 
-                    }
-                    if (r1 == -5)
-                    {
-                        goto delay;
-                    }
-                    if (form1.urlList.InvokeRequired)
-                    {
-                        delegate2 sl = new delegate2(delegate()
-                        {
-                            if (r1 == -2)
-                            {
-                                //red daiyyr
-                                failed++;
-                            }
-                            else
-                            {
-            //                    form1.urlList.SetItemChecked(i, true);
-                                succeed++;
-            //                    form1.setLogT(" got from " + form1.urlList.GetItemText(form1.urlList.Items[i]) + ": " + successInOneProbe);
-                                SUMsuccessInOneProbe += successInOneProbe;
-                                successInOneProbe = 0;
-                            }
-                        });
-                        form1.urlList.Invoke(sl);
-                    }
-                    else
-                    {
-                        if (r1 == -2)
-                        {
-                            //red
-                            failed++;
+                int r1 = 0;
+
+            //新潟亀田ｱﾋﾟﾀ店  M
+            //   http://aksale.advs.jp/cp/akachan_sale_pc/search_event_list.cgi?area2=%90V%8a%83%8c%a7&event_type=6&sid=37140&kmws=
+
+                //ｱﾘｵ上田店 M
+            //   http://aksale.advs.jp/cp/akachan_sale_pc/search_event_list.cgi?area2=%92%b7%96%ec%8c%a7&event_type=6&sid=37194&kmws=
+            //songben M
+            //   http://aksale.advs.jp/cp/akachan_sale_pc/search_event_list.cgi?area2=%92%b7%96%ec%8c%a7&event_type=6&sid=37196&kmws=
+
+                //ららぽｰと横浜店
+           // http://aksale.advs.jp/cp/akachan_sale_pc/search_event_list.cgi?area2=%90_%93%de%90%ec%8c%a7&event_type=6&sid=37139&kmws=
+
+                while ((r1 = this.probe("%90_%93%de%90%ec%8c%a7", "37139")) == -1)   //daiyyr
+                {
+  
+                }
+                if (r1 == -5) //no available appointment
+                {
+                    goto delay;
+                }
+                    
+
+        delay://不写在while的开头，避免第一次就延时
+                if (form1.rate.Text.Equals(""))
+                {
+                    Thread.Sleep(100);
+                }
+                else 
+                {
+                    try{
+                        if (Convert.ToInt32(form1.rate.Text) > 0){
+                            Thread.Sleep(Convert.ToInt32(form1.rate.Text));
                         }
                         else
-                        {
-             //               form1.urlList.SetItemChecked(i, true);
-                            succeed++;
-                        }
-                    }
-
-            delay://不写在while的开头，避免第一次就延时
-                    if (form1.rate.Text.Equals(""))
-                    {
-                        Thread.Sleep(100);
-                    }
-                    else 
-                    {
-                        try{
-                            if (Convert.ToInt32(form1.rate.Text) > 0){
-                                Thread.Sleep(Convert.ToInt32(form1.rate.Text));
-                            }
-                            else
-                            {
-                                Thread.Sleep(100);
-                            }
-                        }
-                        catch (Exception)
                         {
                             Thread.Sleep(100);
                         }
                     }
-                    
-                    
-   //             }//end of 'for' for checklistbox
-            }
-            form1.setLogT( "列表扫描结束，成功列表项: " + succeed + ", 失败列表项: " + failed + ", 共收集好友: " + SUMsuccessInOneProbe);
-            succeed = 0;
-            failed = 0;
-            SUMsuccessInOneProbe = 0;
-            if (gFileName != null)
-            {
-                form1.setLogT("Result in " + System.Environment.CurrentDirectory + "\\" + gFileName);
+                    catch (Exception)
+                    {
+                        Thread.Sleep(100);
+                    }
+                }
+            }//end of while
 
-            }
-            gFriends.Clear();
-            if (form1.urlList.InvokeRequired)
+
+            if (form1.mailGrid.InvokeRequired)
             {
                 delegate2 sl = new delegate2(delegate()
                 {
-                    form1.deleteB.Enabled = true;
+                    form1.deleteMail.Enabled = true;
                 });
-                form1.urlList.Invoke(sl);
+                form1.mailGrid.Invoke(sl);
             }
             else
             {
-                form1.deleteB.Enabled = true;
+                form1.deleteMail.Enabled = true;
             }
+
             Form1.gForceToStop = false;
             return;
         }
@@ -392,3 +498,17 @@ namespace widkeyPaperDiaper
 
     }
 }
+
+
+
+
+
+//detail use string2url ok?  use string2url with encode
+
+//import data;   slip phone
+
+//static method in form1 ---->  MushroomUtil  --  in environment (using namespace.MushroomUtil)
+
+//delete grib
+
+//adress choosen commbobox

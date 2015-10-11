@@ -7,11 +7,11 @@ namespace widkeyPaperDiaper
 {
     public class Appointment
     {
-        private string CardNo { get; set; }
-        private string CardPassword { get; set; }
-        private string ChineseName { get; set; }
-        private string JapaneseName { get; set; }
-        private string Phone { get; set; }
+        public string CardNo { get; set; }
+        public string CardPassword { get; set; }
+        public string ChineseName { get; set; }
+        public string JapaneseName { get; set; }
+        public string Phone { get; set; }
 
         public Appointment(string cardNo, string cardPassword, string chineseName, string japaneseName, string phone)
         {

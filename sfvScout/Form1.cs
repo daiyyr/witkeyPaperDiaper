@@ -23,13 +23,16 @@ namespace widkeyPaperDiaper
         
         public static bool debug = true;
         public static bool gForceToStop = false;
-        public static CookieCollection gCookieContainer = null;
         public static bool gLoginOkFlag = false;
         static DateTime expireDate = new DateTime(2015, 11, 04);
         static string rgx;
         static Match myMatch;
         static string gHost = "aksale.advs.jp";
 
+        CookieCollection cookieContainerForTest;
+
+        List<Appointment> Applist;
+        List<Mail163<PaperDiaper>> Maillist;
         //Thread gAlarm = null;
        // string gnrnodeGUID = "";
       //  string gViewstate = "";
@@ -216,6 +219,27 @@ namespace widkeyPaperDiaper
             return (sb.ToString());
         }
 
+        public static string ToUrlEncode(string strCode, System.Text.Encoding encode)
+        {
+            StringBuilder sb = new StringBuilder();
+            byte[] byStr = encode.GetBytes(strCode); //默认是System.Text.Encoding.Default.GetBytes(str)  
+            System.Text.RegularExpressions.Regex regKey = new System.Text.RegularExpressions.Regex("^[A-Za-z0-9]+$");
+            for (int i = 0; i < byStr.Length; i++)
+            {
+                string strBy = Convert.ToChar(byStr[i]).ToString();
+                if (regKey.IsMatch(strBy))
+                {
+                    //是字母或者数字则不进行转换    
+                    sb.Append(strBy);
+                }
+                else
+                {
+                    sb.Append(@"%" + Convert.ToString(byStr[i], 16));
+                }
+            }
+            return (sb.ToString());
+        }
+
         public static void writeFile(string file, string content)
         {
             FileStream aFile;
@@ -229,7 +253,7 @@ namespace widkeyPaperDiaper
 
 
 
-        public static void setRequest(HttpWebRequest req)
+        public static void setRequest(HttpWebRequest req, CookieCollection cookies)
         {
             //req.Accept = "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8";
             //req.Accept = "*/*";
@@ -245,16 +269,16 @@ namespace widkeyPaperDiaper
             req.AllowAutoRedirect = false;
             req.CookieContainer = new CookieContainer();
             req.CookieContainer.PerDomainCapacity = 40;
-            if (gCookieContainer != null)
+            if (cookies != null)
             {
-                req.CookieContainer.Add(gCookieContainer);
+                req.CookieContainer.Add(cookies);
             }
             req.ContentType = "application/x-www-form-urlencoded";
         }
 
-        public static int writePostData(Form1 form1, HttpWebRequest req, string data)
+        public static int writePostData(Form1 form1, HttpWebRequest req, string Encode)
         {
-            byte[] postBytes = Encoding.UTF8.GetBytes(data);
+            byte[] postBytes = Encoding.UTF8.GetBytes(Encode);
             //req.ContentLength = postBytes.Length;  // cause InvalidOperationException: 写入开始后不能设置此属性。
             Stream postDataStream = null;
             try
@@ -272,13 +296,14 @@ namespace widkeyPaperDiaper
             return 1;
         }
 
-        public static string resp2html(HttpWebResponse resp)
+        public static string resp2html(HttpWebResponse resp )
         {
             
             if (resp.StatusCode == HttpStatusCode.OK)
             {
                 StreamReader stream = new StreamReader(resp.GetResponseStream());
                 return stream.ReadToEnd();
+                //Shift_JIS
             }
             else
             {
@@ -287,17 +312,123 @@ namespace widkeyPaperDiaper
 
         }
 
+        public static string resp2html(HttpWebResponse resp, string charSet, Form1 form1)
+        {
+            var buffer = GetBytes(resp); 
+            if (resp.StatusCode == HttpStatusCode.OK)
+            {
+                if (String.IsNullOrEmpty(charSet) || string.Compare(charSet, "ISO-8859-1") == 0)
+                {
+                    charSet = GetEncodingFromBody(buffer);
+                }
+
+                try
+                {
+                    var encoding = Encoding.GetEncoding(charSet);  //Shift_JIS
+                    var str = encoding.GetString(buffer);                
+
+                    return str;
+                }
+                catch (Exception ex)
+                {
+                    form1.setLogT("resp2html, " + ex.ToString());
+                    return string.Empty;
+                }
+
+
+                /*
+                string respHtml = "";
+                char[] cbuffer = new char[256];
+                Stream respStream = resp.GetResponseStream();
+                StreamReader respStreamReader = new StreamReader(respStream, encoding);//respStream,Encoding.UTF8
+                int byteRead = 0;
+                try
+                {
+                    byteRead = respStreamReader.Read(cbuffer, 0, 256);
+
+                }
+                catch (WebException webEx)
+                {
+                    setLogT("respStreamReader, " + webEx.Status.ToString());
+                    return "";
+                }
+                while (byteRead != 0)
+                {
+                    string strResp = new string(cbuffer, 0, byteRead);
+                    respHtml = respHtml + strResp;
+                    try
+                    {
+                        byteRead = respStreamReader.Read(cbuffer, 0, 256);
+                    }
+                    catch (WebException webEx)
+                    {
+                        setLogT("respStreamReader, " + webEx.Status.ToString());
+                        return "";
+                    }
+
+                }
+                respStreamReader.Close();
+                respStream.Close();
+                return respHtml;
+
+                */
+
+            }
+            else
+            {
+                return resp.StatusDescription;
+            }
+
+        }
+
+        private static byte[] GetBytes(WebResponse response)
+        {
+            var length = (int)response.ContentLength;
+            byte[] data;
+
+            using (var memoryStream = new MemoryStream())
+            {
+                var buffer = new byte[0x100];
+
+                using (var rs = response.GetResponseStream())
+                {
+                    for (var i = rs.Read(buffer, 0, buffer.Length); i > 0; i = rs.Read(buffer, 0, buffer.Length))
+                    {
+                        memoryStream.Write(buffer, 0, i);
+                    }
+                }
+
+                data = memoryStream.ToArray();
+            }
+
+            return data;
+        }
+
+        private static string GetEncodingFromBody(byte[] buffer)
+        {
+            var regex = new Regex(@"<meta(\s+)http-equiv(\s*)=(\s*""?\s*)content-type(\s*""?\s+)content(\s*)=(\s*)""text/html;(\s+)charset(\s*)=(\s*)(?<charset>[a-zA-Z0-9-]+?)""(\s*)(/?)>", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+            var str = Encoding.ASCII.GetString(buffer);
+            var regMatch = regex.Match(str);
+            if (regMatch.Success)
+            {
+                var charSet = regMatch.Groups["charset"].Value;
+                return charSet;
+            }
+
+            return Encoding.ASCII.BodyName;
+        }
 
         /* 
-         * return success(1) or not
+         * return response status
          */
-        public static int weLoveMuYue(Form1 form1, string url, string method, string referer, bool allowAutoRedirect, string postData)
+        public static string weLoveMuYue(Form1 form1, string url, string method, string referer, bool allowAutoRedirect, string postData, ref CookieCollection cookies)
         {
+            string result;
             while (true)
             {
                 HttpWebRequest req = (HttpWebRequest)WebRequest.Create(url);
                 HttpWebResponse resp = null;
-                setRequest(req);
+                setRequest(req, cookies);
                 req.Method = method;
                 req.Referer = referer;
                 if (allowAutoRedirect)
@@ -330,11 +461,7 @@ namespace widkeyPaperDiaper
                 }
                 if (resp != null)
                 {
-                    respHtml = resp2html(resp);
-                    if (respHtml.Equals(""))
-                    {
-                        continue;
-                    }
+                    result = resp.StatusDescription;
                 }
                 else
                 {
@@ -342,25 +469,27 @@ namespace widkeyPaperDiaper
                 }
                 if (debug)
                 {
+                    respHtml = resp2html(resp);
                     form1.setTestLog(req, respHtml);
                 }
-                gCookieContainer = req.CookieContainer.GetCookies(req.RequestUri);
+                cookies = req.CookieContainer.GetCookies(req.RequestUri);
                 resp.Close();
                 break;
             }
-            return 1;
+            return string.Empty;
         }
         /* 
          * return success(1) or not
          * unregular host
          */
-        public static int weLoveMuYue(Form1 form1, string url, string method, string referer, bool allowAutoRedirect, string postData, string host)
+        public static string weLoveMuYue(Form1 form1, string url, string method, string referer, bool allowAutoRedirect, string postData, ref CookieCollection cookies, string host)
         {
+            string result;
             while (true)
             {
                 HttpWebRequest req = (HttpWebRequest)WebRequest.Create(url);
                 HttpWebResponse resp = null;
-                setRequest(req);
+                setRequest(req, cookies);
                 req.Host = host;
                 req.Method = method;
                 req.Referer = referer;
@@ -395,11 +524,7 @@ namespace widkeyPaperDiaper
                 }
                 if (resp != null)
                 {
-                    respHtml = resp2html(resp);
-                    if (respHtml.Equals(""))
-                    {
-                        continue;
-                    }
+                    result = resp.StatusDescription;
                 }
                 else
                 {
@@ -407,26 +532,27 @@ namespace widkeyPaperDiaper
                 }
                 if (debug)
                 {
+                    respHtml = resp2html(resp);
                     form1.setTestLog(req, respHtml);
                 }
-                gCookieContainer = req.CookieContainer.GetCookies(req.RequestUri);
+                cookies = req.CookieContainer.GetCookies(req.RequestUri);
                 resp.Close();
                 break;
             }
-            return 1;
+            return string.Empty;
         }
 
 
         /* 
-         * return responsive HTML
+         * return response HTML
          */
-        public static string weLoveYue(Form1 form1, string url, string method, string referer, bool allowAutoRedirect, string postData)
+        public static string weLoveYue(Form1 form1, string url, string method, string referer, bool allowAutoRedirect, string postData, ref CookieCollection cookies, bool responseInUTF8)
         {
             while (true)
             {
                 HttpWebRequest req = (HttpWebRequest)WebRequest.Create(url);
                 HttpWebResponse resp = null;
-                setRequest(req);
+                setRequest(req, cookies);
                 req.Method = method;
                 req.Referer = referer;
                 if (allowAutoRedirect)
@@ -458,13 +584,20 @@ namespace widkeyPaperDiaper
                     continue;
                 }
                 if (resp != null)
-                {
-                    respHtml = resp2html(resp);
+                {   
+                    if(responseInUTF8)
+                    {
+                        respHtml = resp2html(resp);
+                    }else
+                    {
+                        respHtml = resp2html(resp, resp.CharacterSet, form1); // like  Shift_JIS
+                    }
+
                     if (respHtml.Equals(""))
                     {
                         continue;
                     }
-                    gCookieContainer = req.CookieContainer.GetCookies(req.RequestUri);
+                    cookies = req.CookieContainer.GetCookies(req.RequestUri);
                     if (debug)
                     {
                         form1.setTestLog(req, respHtml);
@@ -483,13 +616,13 @@ namespace widkeyPaperDiaper
          * return responsive HTML
          * unregular host
          */
-        public static string weLoveYue(Form1 form1, string url, string method, string referer, bool allowAutoRedirect, string postData, string host)
+        public static string weLoveYue(Form1 form1, string url, string method, string referer, bool allowAutoRedirect, string postData, ref CookieCollection cookies, string host, bool responseInUTF8)
         {
             while (true)
             {
                 HttpWebRequest req = (HttpWebRequest)WebRequest.Create(url);
                 HttpWebResponse resp = null;
-                setRequest(req);
+                setRequest(req, cookies);
                 req.Method = method;
                 req.Referer = referer;
                 if (allowAutoRedirect)
@@ -524,12 +657,18 @@ namespace widkeyPaperDiaper
                 }
                 if (resp != null)
                 {
-                    respHtml = resp2html(resp);
+                    if(responseInUTF8)
+                    {
+                        respHtml = resp2html(resp);
+                    }else
+                    {
+                        respHtml = resp2html(resp, resp.CharacterSet, form1); // like  Shift_JIS
+                    }
                     if (respHtml.Equals(""))
                     {
                         continue;
                     }
-                    gCookieContainer = req.CookieContainer.GetCookies(req.RequestUri);
+                    cookies = req.CookieContainer.GetCookies(req.RequestUri);
                     if (debug)
                     {
                         form1.setTestLog(req, respHtml);
@@ -547,12 +686,12 @@ namespace widkeyPaperDiaper
         /*
          * do not handle the response
          */
-        public static HttpWebResponse weLoveYueer(Form1 form1, HttpWebResponse resp, string url, string method, string referer, bool allowAutoRedirect, string postData)
+        public static HttpWebResponse weLoveYueer(Form1 form1, HttpWebResponse resp, string url, string method, string referer, bool allowAutoRedirect, string postData, ref CookieCollection cookies)
         {
             while (true)
             {
                 HttpWebRequest req = (HttpWebRequest)WebRequest.Create(url);
-                setRequest(req);
+                setRequest(req, cookies);
                 req.Method = method;
                 req.Referer = referer;
                 if (allowAutoRedirect)
@@ -585,7 +724,7 @@ namespace widkeyPaperDiaper
                 }
                 if (resp != null)
                 {
-                    gCookieContainer = req.CookieContainer.GetCookies(req.RequestUri);
+                    cookies = req.CookieContainer.GetCookies(req.RequestUri);
                     return resp;
                 }
                 else
@@ -597,7 +736,6 @@ namespace widkeyPaperDiaper
 
 
 
-        
 
         private void loginB_Click(object sender, EventArgs e)
         {
@@ -610,9 +748,35 @@ namespace widkeyPaperDiaper
 
         private void autoB_Click(object sender, EventArgs e)
         {
-            PaperDiaper paper = new PaperDiaper(this);
-            Thread t = new Thread(paper.startProbe);
-            t.Start();
+            if (debug)
+            {
+                PaperDiaper paper = new PaperDiaper(
+                    this,
+                    new Appointment ("2800048300159", "abc123456", "崔飛飛", "サイヒヒ", "090-8619-3569"),
+                    new Mail163<PaperDiaper>("15985830370@163.com","dyyr7921129",this));
+                Thread t = new Thread(paper.startProbe);
+                t.Start();
+            }
+            else
+            {
+                if (Applist == null || Applist.Count < 1)
+                {
+                    this.setLogT("please import valid appointment details!");
+                    return;
+                }
+                if (Maillist == null || Maillist.Count < 1)
+                {
+                    this.setLogT("please import valid email details!");
+                    return;
+                }
+                for (int i = 0; i < Applist.Count && i < Maillist.Count; i++)
+                {
+                    PaperDiaper paper = new PaperDiaper(this, Applist[i], Maillist[i]);
+                    Thread t = new Thread(paper.startProbe);
+                    t.Start();
+                }
+            }
+            
         }
 
 
@@ -626,27 +790,18 @@ namespace widkeyPaperDiaper
 
         public void addEmails()
         {
+            Maillist = new List<Mail163<PaperDiaper>>();
+
             OpenFileDialog fileDialog = new OpenFileDialog();
             fileDialog.Filter = "(*.txt)|*.txt|(*.html)|*.html";
 
-            if (urlList.InvokeRequired)
+            if (mailGrid.InvokeRequired)
             {
                 delegate2 sl = new delegate2(delegate()
                 {
                     //打开对话框, 判断用户是否正确的选择了文件
                     if (fileDialog.ShowDialog() == DialogResult.OK)
                     {
-
-                        //获取用户选择文件的后缀名
-                        //    string extension = Path.GetExtension(fileDialog.FileName);
-                        //声明允许的后缀名
-                        //    string[] str = new string[] { ".txt", ".html" };
-                        //    if (!str.Contains(extension))
-                        //    {
-                        //        MessageBox.Show("仅能上传txt,html格式的文件！");
-                        //    }
-                        //}
-
                         //获取用户选择的文件，并判断文件大小不能超过20K，fileInfo.Length是以字节为单位的
                         FileInfo fileInfo = new FileInfo(fileDialog.FileName);
                         if (fileInfo.Length > 504800)
@@ -656,85 +811,118 @@ namespace widkeyPaperDiaper
                         else
                         {
                             //在这里就可以写获取到正确文件后的代码了
-                            string[] lines = File.ReadAllLines(fileDialog.FileName);
+                            string[] lines = File.ReadAllLines(fileDialog.FileName, System.Text.Encoding.GetEncoding("GB18030"));
                             foreach (string line in lines)
                             {
                                 if (line.Length == 0)
                                 {
                                     continue;
                                 }
-                                /*
-                                if ((line.Length>0 && line.Length < 4) ||!line.Substring(0, 4).Equals("1-1-"))
-                                {
-                                    MessageBox.Show("文件格式错误,导入中止!");
-                                    break;
-                                }
-                                */
                                 else
                                 {
-                                    urlList.Items.Add(line /*.Substring(4, line.Length - 4)*/ );
+                                    Regex regex = new Regex(@"( ){2,}");
+                                    string[] s = regex.Replace(line.Trim(), " ").Split(' ');
+                                    if (s.Length != 2)
+                                    {
+                                        setLogT("ignore invalid line: " + line);
+                                    }
+                                    else
+                                    {
+                                        Maillist.Add(new Mail163<PaperDiaper>(s[0], s[1], this));
+                                    }
                                 }
+                            }
+                            if (Maillist.Count > 0)
+                            {
+                                var source = new BindingSource();
+                                source.DataSource = Maillist;
+                                DataGridViewTextBoxColumn txtCol = new DataGridViewTextBoxColumn();
+                                txtCol.DataPropertyName = txtCol.Name = txtCol.HeaderText = "email";
+                                mailGrid.Columns.Add(txtCol);
+                                DataGridViewTextBoxColumn txtCol2 = new DataGridViewTextBoxColumn();
+                                txtCol2.DataPropertyName = txtCol2.Name = txtCol2.HeaderText = "password";
+                                mailGrid.Columns.Add(txtCol2);
+                                mailGrid.DataSource = source;
                             }
                         }
                     }
                 });
-                urlList.Invoke(sl);
+                mailGrid.Invoke(sl);
             }
             else //do not use delegate
             {
                 if (fileDialog.ShowDialog() == DialogResult.OK)
+                {
+                    FileInfo fileInfo = new FileInfo(fileDialog.FileName);
+                    if (fileInfo.Length > 204800)
                     {
-                        FileInfo fileInfo = new FileInfo(fileDialog.FileName);
-                        if (fileInfo.Length > 204800)
+                        MessageBox.Show("上传的文件不能大于200K");
+                    }
+                    else
+                    {
+                        string[] lines = File.ReadAllLines(fileDialog.SafeFileName);
+                        foreach (string line in lines)
                         {
-                            MessageBox.Show("上传的文件不能大于200K");
-                        }
-                        else
-                        {
-                            string[] lines = File.ReadAllLines(fileDialog.SafeFileName);
-                            foreach (string line in lines)
+                            if (line.Length == 0)
                             {
-                                /*
-                                if (!line.Substring(0, 4).Equals("1-1-"))
+                                continue;
+                            }
+                            else
+                            {
+                                Regex regex = new Regex(@"( ){2,}");
+                                string[] s = regex.Replace(line.Trim(), " ").Split(' ');
+                                if (s.Length != 2)
                                 {
-                                    MessageBox.Show("文件格式错误!");
-                                    break;
-                                }
-                                */
-                                if (line.Length == 0)
-                                {
-                                    continue;
+                                    setLogT("ignore invalid line: " + line);
                                 }
                                 else
                                 {
-                                    urlList.Items.Add(line /* .Substring(4, line.Length - 4) */ );
+                                    Maillist.Add(new Mail163<PaperDiaper>(s[0], s[1], this));
                                 }
                             }
                         }
+                        if (Maillist.Count > 0)
+                        {
+                            var source = new BindingSource();
+                            source.DataSource = Maillist;
+                            DataGridViewTextBoxColumn txtCol = new DataGridViewTextBoxColumn();
+                            txtCol.DataPropertyName = txtCol.Name = txtCol.HeaderText = "email";
+                            //daiyyr
+                            mailGrid.Columns.Add(txtCol);
+                            txtCol.DataPropertyName = txtCol.Name = txtCol.HeaderText = "password";
+                            mailGrid.Columns.Add(txtCol);
+                            mailGrid.DataSource = source;
+                        }
                     }
                 }
+            }
         }
 
         public void deleteEmails()
         {
-            if (urlList.InvokeRequired)
+
+            /*daiyyr
+            if (mailGrid.InvokeRequired)
             {
                 delegate2 sl = new delegate2(delegate()
                 {
-                    for (int i = urlList.CheckedItems.Count - 1; i >= 0; i--)
+                    for (int i = mailGrid.CheckedItems.Count - 1; i >= 0; i--)
                     {
-                        urlList.Items.Remove(urlList.CheckedItems[i]);
+                        mailGrid.Items.Remove(mailGrid.CheckedItems[i]);
                     }
                 });
-                urlList.Invoke(sl);
+                mailGrid.Invoke(sl);
             }
             else
             {
-                for (int i = urlList.CheckedItems.Count - 1; i >= 0; i--)
+                for (int i = mailGrid.CheckedItems.Count - 1; i >= 0; i--)
                 {
-                    urlList.Items.Remove(urlList.CheckedItems[i]);
+                    mailGrid.Items.Remove(mailGrid.CheckedItems[i]);
                 }
             }
+            */
+
+
             /*
              * put the delete result to the file
             string strCollected = string.Empty;
@@ -767,12 +955,12 @@ namespace widkeyPaperDiaper
 
         public void addDetails()
         {
-            List<Appointment> list = new List<Appointment>();
+            Applist = new List<Appointment>();
 
             OpenFileDialog fileDialog = new OpenFileDialog();
             fileDialog.Filter = "(*.txt)|*.txt|(*.html)|*.html";
 
-            if (urlList.InvokeRequired)
+            if (appointmentGrid.InvokeRequired)
             {
                 delegate2 sl = new delegate2(delegate()
                 {
@@ -788,7 +976,7 @@ namespace widkeyPaperDiaper
                         else
                         {
                             //在这里就可以写获取到正确文件后的代码了
-                            string[] lines = File.ReadAllLines(fileDialog.FileName);
+                            string[] lines = File.ReadAllLines(fileDialog.FileName, System.Text.Encoding.GetEncoding("GB18030"));
                             foreach (string line in lines)
                             {
                                 if (line.Length == 0)
@@ -803,21 +991,22 @@ namespace widkeyPaperDiaper
                                     {
                                         setLogT("ignore invalid line: " + line); //500
                                     }
-                                    list.Add(new Appointment(s[0], s[1], s[2], s[3], s[4]));
-
-                                    // urlList.Items.Add(line /*.Substring(4, line.Length - 4)*/ );
+                                    else
+                                    {
+                                        Applist.Add(new Appointment(s[0], s[1], s[2], s[3], s[4]));
+                                    }
                                 }
                             }
-                            if (list.Count > 0)
+                            if (Applist.Count > 0)
                             {
                                 var source = new BindingSource();
-                                source.DataSource = list;
-                                dataGridView1.DataSource = source;
+                                source.DataSource = Applist;
+                                appointmentGrid.DataSource = source;
                             }
                         }
                     }
                 });
-                urlList.Invoke(sl);
+                appointmentGrid.Invoke(sl);
             }
             else //do not use delegate
             {
@@ -845,17 +1034,18 @@ namespace widkeyPaperDiaper
                                 {
                                     setLogT("ignore invalid line: " + line); //500
                                 }
-                                list.Add(new Appointment(s[0], s[1], s[2], s[3], s[5]));
-
-                                // urlList.Items.Add(line /*.Substring(4, line.Length - 4)*/ );
+                                else
+                                {
+                                    Applist.Add(new Appointment(s[0], s[1], s[2], s[3], s[5]));
+                                }
                             }
                         }
-                        if (list.Count > 0)
+                        if (Applist.Count > 0)
                         {
                             var source = new BindingSource();
-                            source.DataSource = list;
-                            dataGridView1.DataSource = source;
-                            dataGridView1.
+                            source.DataSource = Applist;
+                            appointmentGrid.DataSource = source;
+                //            dataGridView1.
                         }
                     }
                 }
@@ -865,24 +1055,26 @@ namespace widkeyPaperDiaper
 
         public void deleteDetails()
         {
-            if (urlList.InvokeRequired)
+            /*
+            if (appointmentGrid.InvokeRequired)
             {
                 delegate2 sl = new delegate2(delegate()
                 {
-                    for (int i = urlList.CheckedItems.Count - 1; i >= 0; i--)
+                    for (int i = appointmentGrid.CheckedItems.Count - 1; i >= 0; i--)
                     {
-                        urlList.Items.Remove(urlList.CheckedItems[i]);
+                        appointmentGrid.Items.Remove(appointmentGrid.CheckedItems[i]);
                     }
                 });
-                urlList.Invoke(sl);
+                appointmentGrid.Invoke(sl);
             }
             else
             {
-                for (int i = urlList.CheckedItems.Count - 1; i >= 0; i--)
+                for (int i = appointmentGrid.CheckedItems.Count - 1; i >= 0; i--)
                 {
-                    urlList.Items.Remove(urlList.CheckedItems[i]);
+                    appointmentGrid.Items.Remove(appointmentGrid.CheckedItems[i]);
                 }
             }
+             */ 
         }
 
         private void addDetails_Click(object sender, EventArgs e)
@@ -938,8 +1130,38 @@ namespace widkeyPaperDiaper
             setLogT(regex.Replace("22      22", " "));
             string[] s = regex.Replace(" abc def kkk   333 ppp ".Trim(), " ").Split(' ');
             setLogT(s.Length.ToString());
+
+            string test2 = "abc";
+     //       testCall(test2);
+            setLogT(test2);
+
+            Appointment test3 = new Appointment("159","","","","");
+            testCall(ref test3);
+            setLogT(test3.CardNo);
+
+            setLogT("崔飛飛 " + Form1.ToUrlEncode("崔飛飛", System.Text.Encoding.GetEncoding("shift-jis")));//Shift_JIS     ??
+            setLogT("サイヒヒ "+Form1.ToUrlEncode("サイヒヒ"));
+            setLogT("090-8619-3569 "+Form1.ToUrlEncode("090-8619-3569"));
+
+
+            string respHtml = Form1.weLoveYue(
+                this,
+                "https://aksale.advs.jp/cp/akachan_sale_pc/form_card_no.cgi"
+                ,
+                "POST",
+                "https://aksale.advs.jp/cp/akachan_sale_pc/mail_form.cgi",
+                false,
+                "card_no=" + "1234567890123" + "&sbmt=%8E%9F%82%D6",
+                ref cookieContainerForTest,
+                false
+                );
+            setLogT("崔飛飛 ".Length.ToString());
+
             
-            
+        }
+        void testCall(ref Appointment t)
+        {
+            t = new Appointment("152", "", "", "", "");
         }
 
         private void textBox1_keyPress(object sender, KeyPressEventArgs e)
@@ -968,6 +1190,8 @@ namespace widkeyPaperDiaper
                 }
             }
         }
+
+
 
         /*
          // 只能控制写入尾部的字符 
