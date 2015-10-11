@@ -21,23 +21,86 @@ namespace widkeyPaperDiaper
     public partial class Form1 : Form
     {
         
-        public static bool debug = true;
+        public static bool debug = false;
+
+
         public static bool gForceToStop = false;
         public static bool gLoginOkFlag = false;
-        static DateTime expireDate = new DateTime(2015, 11, 04);
+        static DateTime expireDate = new DateTime(2015, 10, 16);
         static string rgx;
         static Match myMatch;
         static string gHost = "aksale.advs.jp";
+        public County selecteCounty = null;
+        public int selectedShop = -1;
+        public string selectedType = null;
 
         CookieCollection cookieContainerForTest;
 
         List<Appointment> Applist;
         List<Mail163<PaperDiaper>> Maillist;
-        //Thread gAlarm = null;
-       // string gnrnodeGUID = "";
-      //  string gViewstate = "";
-      //  string gViewStateGenerator = "";
-       
+        List<County> Countylist = new List<County>();
+        
+        
+        public class County
+        {
+            public string Name;
+            public List<string> Shops { get; set; }
+            public List<string> Sids { get; set; }
+            public County(string name, List<string> shops, List<string> sids)
+            {
+                Name = name;
+                Shops = shops;
+                Sids = sids;
+            }
+        }
+
+        public Form1()
+        {
+            InitializeComponent();
+            Countylist.Add(new County(
+                "北海道",
+                new List<string> { "旭川店", "屯田ｲﾄｰﾖｰｶﾄﾞｰ店", "ｱﾘｵ札幌店", "新さっぽろ店" },
+                new List<string> { "37116", "37305", "37185", "37187" })
+                );
+            Countylist.Add(new County(
+                "青森県",
+                new List<string> { "青森ｻﾝﾛｰﾄﾞ店" },
+                new List<string> { "37106" })
+                );
+            Countylist.Add(new County(
+                "宮城県",
+                new List<string> { "仙台泉店", "ﾗﾗｶﾞｰﾃﾞﾝ長町店", "ｱﾘｵ仙台泉店" },
+                new List<string> { "37091", "37175", "37208" })
+                );
+
+
+            label6.Text = "expire date: " + expireDate.ToString("yyyy-MM-dd");
+            if (debug)
+            {
+                button1.Visible = true;
+                testLog.Visible = true;
+                this.ClientSize = new System.Drawing.Size(1150, 960);
+            }
+            else
+            {
+                DateTime t = GetNistTime(this);
+                if (t == DateTime.MinValue)
+                {
+                    setLogT("请连接互联网后重新启动程序");
+                    autoB.Visible = false;
+                }
+                else
+                {
+                    if ((t - expireDate).Days > 0)
+                    {
+                        setLogT("程序已过期，请联系作者");
+                        autoB.Visible = false;
+                    }
+                }
+            }
+        }
+
+        
 
         public delegate void setLog(string str1);
         public void setLogT(string s)
@@ -58,7 +121,7 @@ namespace widkeyPaperDiaper
             }
         }
 
-        public void setLogtRed(string s)
+        public void setLogtRed(string s)//something wrong, if it's first line, no red
         {
             if (logT.InvokeRequired)
             {
@@ -109,44 +172,6 @@ namespace widkeyPaperDiaper
             }
         }
 
-        public Form1()
-        {
-            InitializeComponent();
-            label6.Text = "expire date: " + expireDate.ToString("yyyy-MM-dd");
-            if (debug)
-            {
-                button1.Visible = true;
-                testLog.Visible = true;
-                this.ClientSize = new System.Drawing.Size(931, 760);
-            }
-            else
-            {
-                DateTime t = GetNistTime(this);
-                if (t == DateTime.MinValue)
-                {
-                    setLogT("请连接互联网后重新启动程序");
-                    autoB.Visible = false;
-                }
-                else
-                {
-                    if ((t - expireDate).Days > 0)
-                    {
-                        setLogT("程序已过期，请联系作者");
-                        autoB.Visible = false;
-                    }
-                }
-            }
-            
-
-            //if (File.Exists(System.Environment.CurrentDirectory + "\\" + "urlList"))
-            //{
-            //    string[] lines = File.ReadAllLines(System.Environment.CurrentDirectory + "\\" + "urlList");
-            //    foreach (string line in lines)
-            //    {
-            //        urlList.Items.Add(line);
-            //    }
-            //}
-        }
         /*
         public void alarm()
         {
@@ -420,6 +445,7 @@ namespace widkeyPaperDiaper
 
         /* 
          * return response status
+         * especially, if found, return"found: http......"
          */
         public static string weLoveMuYue(Form1 form1, string url, string method, string referer, bool allowAutoRedirect, string postData, ref CookieCollection cookies)
         {
@@ -462,6 +488,10 @@ namespace widkeyPaperDiaper
                 if (resp != null)
                 {
                     result = resp.StatusDescription;
+                    if (result == "Found")
+                    {
+                        result += ":"+ resp.Headers["location"];
+                    }
                 }
                 else
                 {
@@ -478,9 +508,11 @@ namespace widkeyPaperDiaper
             }
             return string.Empty;
         }
-        /* 
-         * return success(1) or not
-         * unregular host
+
+        /* unregular host
+         * return response status
+         * especially, if found, return"found: http......"
+         * 
          */
         public static string weLoveMuYue(Form1 form1, string url, string method, string referer, bool allowAutoRedirect, string postData, ref CookieCollection cookies, string host)
         {
@@ -525,6 +557,10 @@ namespace widkeyPaperDiaper
                 if (resp != null)
                 {
                     result = resp.StatusDescription;
+                    if (result == "Found")
+                    {
+                        result += ":"+ resp.Headers["location"];
+                    }
                 }
                 else
                 {
@@ -548,6 +584,10 @@ namespace widkeyPaperDiaper
          */
         public static string weLoveYue(Form1 form1, string url, string method, string referer, bool allowAutoRedirect, string postData, ref CookieCollection cookies, bool responseInUTF8)
         {
+            if (form1 == null)
+            {
+                return string.Empty;
+            }
             while (true)
             {
                 HttpWebRequest req = (HttpWebRequest)WebRequest.Create(url);
@@ -748,6 +788,7 @@ namespace widkeyPaperDiaper
 
         private void autoB_Click(object sender, EventArgs e)
         {
+            setLogtRed("user operation: start probing");
             if (debug)
             {
                 PaperDiaper paper = new PaperDiaper(
@@ -759,6 +800,17 @@ namespace widkeyPaperDiaper
             }
             else
             {
+                if (selecteCounty == null || selectedShop == -1 || selectedType == null)
+                {
+                    this.setLogT("please choose type, county and shop");
+                    return;
+                }
+                if (selectedShop >= selecteCounty.Shops.Count)
+                {
+                    this.setLogT("invalid selected shop");
+                    return;
+                }
+
                 if (Applist == null || Applist.Count < 1)
                 {
                     this.setLogT("please import valid appointment details!");
@@ -786,6 +838,18 @@ namespace widkeyPaperDiaper
             logT.ScrollToCaret();
         }
 
+        public class EmailForshow{
+            public string Email { get; set; }
+            public string Password { get; set; }
+
+            public EmailForshow(string email, string password)
+            {
+                Email = email;
+                Password = password;
+            }
+        }
+            
+
         public delegate void delegate2();
 
         public void addEmails()
@@ -794,6 +858,8 @@ namespace widkeyPaperDiaper
 
             OpenFileDialog fileDialog = new OpenFileDialog();
             fileDialog.Filter = "(*.txt)|*.txt|(*.html)|*.html";
+
+            List<EmailForshow> mailForshow = new List<EmailForshow>();
 
             if (mailGrid.InvokeRequired)
             {
@@ -829,19 +895,14 @@ namespace widkeyPaperDiaper
                                     else
                                     {
                                         Maillist.Add(new Mail163<PaperDiaper>(s[0], s[1], this));
+                                        mailForshow.Add(new EmailForshow(s[0], s[1]));
                                     }
                                 }
                             }
                             if (Maillist.Count > 0)
                             {
                                 var source = new BindingSource();
-                                source.DataSource = Maillist;
-                                DataGridViewTextBoxColumn txtCol = new DataGridViewTextBoxColumn();
-                                txtCol.DataPropertyName = txtCol.Name = txtCol.HeaderText = "email";
-                                mailGrid.Columns.Add(txtCol);
-                                DataGridViewTextBoxColumn txtCol2 = new DataGridViewTextBoxColumn();
-                                txtCol2.DataPropertyName = txtCol2.Name = txtCol2.HeaderText = "password";
-                                mailGrid.Columns.Add(txtCol2);
+                                source.DataSource = mailForshow;
                                 mailGrid.DataSource = source;
                             }
                         }
@@ -1091,11 +1152,29 @@ namespace widkeyPaperDiaper
 
         private void button1_Click(object sender, EventArgs e)
         {
+            setLogT(Form1.ToUrlEncode("北海道", System.Text.Encoding.GetEncoding("shift-jis")));
 
             /*
-            Mail163<PaperDiaper> paper = new Mail163<PaperDiaper>("15985830370@163.com", "dyyr7921129", this, new PaperDiaper(this), "ご注文予約案内", @"https://aksale(\s|\S)+?(?=\r)");
-            paper.queery();
+            PaperDiaper paper = new PaperDiaper(
+                    this,
+                    new Appointment("2800048300159", "abc123456", "崔飛飛", "サイヒヒ", "090-8619-3569"),
+                    new Mail163<PaperDiaper>("15985830370@163.com", "dyyr7921129", this));
+            paper.searchMailDirectely();
             */
+            //     %9b%c1     %94%f2%94%f2          %83t          %83C%83q%83q      090      8619      3569
+           //"&sei=%9B%C1&mei=%94%F2%94%F2&sei_kana=%83T&mei_kana=%83C%83q%83q&tel1=090&tel2=8619&tel3=3569"
+
+            string x1 = Form1.ToUrlEncode("崔飛飛".Substring(0, 1), System.Text.Encoding.GetEncoding("shift-jis")),
+                   x2 = Form1.ToUrlEncode("崔飛飛".Substring(1, "崔飛飛".Length - 1), System.Text.Encoding.GetEncoding("shift-jis")),
+                   y1 = Form1.ToUrlEncode("サイヒヒ".Substring(0, 1), System.Text.Encoding.GetEncoding("shift-jis")),
+                   y2 = Form1.ToUrlEncode("サイヒヒ".Substring(1, "サイヒヒ".Length - 1), System.Text.Encoding.GetEncoding("shift-jis")),
+                   z1 = Regex.Match("090-8619-3569", @"\d+(?=\-)").Value,
+                   z2 = Regex.Match("090-8619-3569", @"(?<=\d+\-)\d+(?=-)").Value,
+                   z3 = Regex.Match("090-8619-3569", @"(?<=\d+\-\d+\-)\d+").Value;
+            setLogT(x1+" "+x2+" "+y1+" "+y2+" "+z1+" "+z2+" "+z3);
+
+             
+
 
             string pattern = @"^";
             string replacement = "1-1-";
@@ -1143,7 +1222,7 @@ namespace widkeyPaperDiaper
             setLogT("サイヒヒ "+Form1.ToUrlEncode("サイヒヒ"));
             setLogT("090-8619-3569 "+Form1.ToUrlEncode("090-8619-3569"));
 
-
+            /*
             string respHtml = Form1.weLoveYue(
                 this,
                 "https://aksale.advs.jp/cp/akachan_sale_pc/form_card_no.cgi"
@@ -1155,6 +1234,7 @@ namespace widkeyPaperDiaper
                 ref cookieContainerForTest,
                 false
                 );
+             */ 
             setLogT("崔飛飛 ".Length.ToString());
 
             
@@ -1175,7 +1255,7 @@ namespace widkeyPaperDiaper
         private void button2_Click(object sender, EventArgs e)
         {
             gForceToStop = true;
-            setLogT("stop probe");
+            setLogtRed("user operation: stop probing");
         }
 
         private void rate_Validating(object sender, CancelEventArgs e)
@@ -1189,6 +1269,36 @@ namespace widkeyPaperDiaper
                     MessageBox.Show("频率只能填写数字");
                 }
             }
+        }
+
+        private void comboBox1_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            if(comboBox1.SelectedIndex < Countylist.Count)
+            {
+                selecteCounty = Countylist[comboBox1.SelectedIndex];
+                comboBox2.Items.Clear();
+                for (int i = 0; i < selecteCounty.Shops.Count; i++)
+                {
+                    comboBox2.Items.Add(selecteCounty.Shops[i]);
+                }
+            }
+            else
+            {
+                selecteCounty = null;
+            }
+            
+                
+            //comboBox1.SelectedItem.ToString()
+        }
+
+        private void comboBox2_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            selectedShop = comboBox2.SelectedIndex;
+        }
+
+        private void comboBox3_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            selectedType = comboBox2.SelectedIndex == 0 ? "6" : "7";//only made 6 / 7 for temp
         }
 
 

@@ -12,7 +12,6 @@ using System.Threading;
 using System.Globalization;
 using System.Net.Cache;
 using System.Text.RegularExpressions;
-
 namespace widkeyPaperDiaper
 {
     public class PaperDiaper
@@ -20,14 +19,13 @@ namespace widkeyPaperDiaper
         static string rgx;
         static Match myMatch;
 
-        int threadNo = 0;
         string verificationCode;
         CookieCollection cookieContainer = null;
 
         Mail163<PaperDiaper> mail;
         Appointment appointment;
 
-
+        string sizeType = null;
 
         public List<string> gFriends = new List<string>();
 
@@ -62,13 +60,11 @@ namespace widkeyPaperDiaper
 
 
 
-        public int probe(string prefecture, string county)
+        public int probe(string county, string shop)
         {
-            form1.setLogT("probe " + county + "..");
-
             string respHtml = Form1.weLoveYue(
                 form1,
-                "http://aksale.advs.jp/cp/akachan_sale_pc/search_event_list.cgi?area2=" + prefecture + "&event_type=6&sid=" + county + "&kmws=",
+                "http://aksale.advs.jp/cp/akachan_sale_pc/search_event_list.cgi?area2=" + county + "&event_type=" + sizeType + "&sid=" + shop + "&kmws=",
 
                 "GET", "", false, "", ref  cookieContainer,
                 false
@@ -78,7 +74,7 @@ namespace widkeyPaperDiaper
 
             if (respHtml.Equals("Found"))
             {
-                form1.setLogT("first GET eccur an error!");
+                form1.setLogT("CardNo" + appointment.CardNo + ", first GET eccur an error!");
                 return -1;
             }
 
@@ -87,7 +83,7 @@ namespace widkeyPaperDiaper
             myMatch = (new Regex(rgx)).Match(respHtml);
             if (!myMatch.Success)
             {
-                form1.setLogT("no available appointment.");
+                form1.setLogT("CardNo" + appointment.CardNo + ", no available appointment.");
                 return -5;// no available appointment
             }
 
@@ -108,7 +104,7 @@ namespace widkeyPaperDiaper
                 eventId = myMatch.Groups[0].Value;
             }
 
-            if (1 == 1)//     !respHtml.Contains("captcha")   daiyyr
+            if (!respHtml.Contains("captcha"))//        daiyyr
             {
                 // jump to verification
             }
@@ -119,10 +115,10 @@ namespace widkeyPaperDiaper
                 respHtml = Form1.weLoveYue(
                 form1,
                 "http://aksale.advs.jp/cp/akachan_sale_pc/captcha.cgi",
-                "POST", 
-                "http://aksale.advs.jp/cp/akachan_sale_pc/search_event_list.cgi?area2=" + county + "&event_type=6&sid=37194&kmws=", 
+                "POST",
+                "http://aksale.advs.jp/cp/akachan_sale_pc/search_event_list.cgi?area2=" + county + "&event_type=" + sizeType + "&sid=" + shop + "&kmws=", 
                 false,
-                "sbmt=%97%5C%96%F1&event_id=2543729870&event_type=6",
+                "sbmt=%97%5C%96%F1&event_id="+eventId+"&event_type=6",
                ref  cookieContainer,
                 false
                 );
@@ -151,7 +147,7 @@ namespace widkeyPaperDiaper
                             form1.textBox2.Text = "";
                             form1.textBox2.ReadOnly = false;
                             form1.textBox2.Focus();
-                            form1.label9.Text = "线程" + threadNo.ToString() + ":请输入验证码";
+                            form1.label9.Text = "cardNo" + appointment.CardNo + ":请输入验证码";
                             form1.label9.Visible = true;
                         });
                         form1.textBox2.Invoke(sl);
@@ -162,7 +158,7 @@ namespace widkeyPaperDiaper
                         form1.textBox2.Text = "";
                         form1.textBox2.ReadOnly = false;
                         form1.textBox2.Focus();
-                        form1.label9.Text = "线程" + threadNo.ToString() + ":请输入验证码";
+                        form1.label9.Text = "cardNo" + appointment.CardNo + ":请输入验证码";
                         form1.label9.Visible = true;
                     }
 
@@ -196,7 +192,7 @@ namespace widkeyPaperDiaper
                 "POST",
                 "http://aksale.advs.jp/cp/akachan_sale_pc/captcha.cgi",
                 false,
-                "input_captcha=" + verificationCode + "&sbmt=%8E%9F%82%D6&event_id="+eventId+"&event_type=6",
+                "input_captcha=" + verificationCode + "&sbmt=%8E%9F%82%D6&event_id=" + eventId + "&event_type=" + sizeType ,
                ref  cookieContainer,
                 false
                 );
@@ -206,7 +202,7 @@ namespace widkeyPaperDiaper
 
                 while (respHtml.Contains("captcha"))
                 {
-                    form1.setLogT("验证码错误！请重新输入");
+                    form1.setLogT("CardNo" + appointment.CardNo + ", 验证码错误！请重新输入");
                     rgx = @"(?<=img src=""\./captcha/)\d+?(?=\.jpeg)";
                     myMatch = (new Regex(rgx)).Match(respHtml);
                     if (myMatch.Success)
@@ -224,7 +220,7 @@ namespace widkeyPaperDiaper
                                 form1.textBox2.Text = "";
                                 form1.textBox2.ReadOnly = false;
                                 form1.textBox2.Focus();
-                                form1.label9.Text = "线程" + threadNo.ToString() + ":请输入验证码";
+                                form1.label9.Text = "CardNo" + appointment.CardNo + ":请输入验证码";
                                 form1.label9.Visible = true;
                             });
                             form1.textBox2.Invoke(sl);
@@ -235,7 +231,7 @@ namespace widkeyPaperDiaper
                             form1.textBox2.Text = "";
                             form1.textBox2.ReadOnly = false;
                             form1.textBox2.Focus();
-                            form1.label9.Text = "线程" + threadNo.ToString() + ":请输入验证码";
+                            form1.label9.Text = "CardNo" + appointment.CardNo + ":请输入验证码";
                             form1.label9.Visible = true;
                         }
 
@@ -268,7 +264,7 @@ namespace widkeyPaperDiaper
                     "POST",
                     "http://aksale.advs.jp/cp/akachan_sale_pc/captcha.cgi",
                     false,
-                    "input_captcha=" + verificationCode + "&sbmt=%8E%9F%82%D6&event_id=" + eventId + "&event_type=6",
+                    "input_captcha=" + verificationCode + "&sbmt=%8E%9F%82%D6&event_id=" + eventId + "&event_type=" + sizeType,
                     ref cookieContainer,
                     false
                 );
@@ -278,18 +274,19 @@ namespace widkeyPaperDiaper
 
 
             //post email
-            Form1.weLoveMuYue(
+            respHtml = Form1.weLoveYue(
                 form1,
                 "https://aksale.advs.jp/cp/akachan_sale_pc/mail_form.cgi"
                 ,
                 "POST",
                 requireVeriCode ? "http://aksale.advs.jp/cp/akachan_sale_pc/_mail.cgi" :
-                ("http://aksale.advs.jp/cp/akachan_sale_pc/_mail.cgi?sbmt=%97%5C%96%F1&event_id="+eventId+"&event_type=6")
+                ("http://aksale.advs.jp/cp/akachan_sale_pc/_mail.cgi?sbmt=%97%5C%96%F1&event_id=" + eventId + "&event_type=" + sizeType)
                 ,
-                false, 
-                "mail1="+mail.address.Replace("@","%40")+"&mail2="+mail.address.Replace("@","%40")+"&sbmt=%8E%9F%82%D6&event_id="+eventId+"&event_type=6",
+                false,
+                "mail1=" + mail.address.Replace("@", "%40") + "&mail2=" + mail.address.Replace("@", "%40") + "&sbmt=%8E%9F%82%D6&event_id=" + eventId + "&event_type=" + sizeType,
           //    "mail1=15985830370%40163.com&mail2=15985830370%40163.com&sbmt=%8E%9F%82%D6&event_id=5393381489&event_type=6"
-                ref cookieContainer
+                ref cookieContainer,
+                false
                 );
 
             respHtml = Form1.weLoveYue(
@@ -299,7 +296,7 @@ namespace widkeyPaperDiaper
                 "POST", 
                 "https://aksale.advs.jp/cp/akachan_sale_pc/mail_form.cgi",
                 false,
-                "sbmt=%91%97%90M&mail1=" + mail.address.Replace("@", "%2540").Replace(".", "%252e") + "&mail2=" + mail.address.Replace("@", "%2540").Replace(".", "%252e") + "&event_id=" + eventId + "&event_type=6",
+                "sbmt=%91%97%90M&mail1=" + mail.address.Replace("@", "%2540").Replace(".", "%252e") + "&mail2=" + mail.address.Replace("@", "%2540").Replace(".", "%252e") + "&event_id=" + eventId + "&event_type=" + sizeType ,
           //    sbmt=%91%97%90M&mail1=15985830370%2540163%252ecom&mail2=15985830370%2540163%252ecom&event_id=7938283049&event_type=6
                 ref cookieContainer,
                 false
@@ -308,11 +305,11 @@ namespace widkeyPaperDiaper
             
             if (respHtml.Contains("下記メールアドレスにメールを送信しました"))
             {               
-                form1.setLogtRed("step1 succeed, checking email: " + mail.address);
+                form1.setLogtRed("CardNo" + appointment.CardNo+ ", step1 succeed, checking email: " + mail.address);
             }
             else
             {
-                form1.setLogtRed("email submitting failed: " + mail.address);
+                form1.setLogtRed("CardNo" + appointment.CardNo + ", email submitting failed: " + mail.address);
                 return -1;
             }
 
@@ -324,14 +321,18 @@ namespace widkeyPaperDiaper
             return 1;
         }
 
-
+        public void searchMailDirectely()
+        {
+            string keyURL = mail.queery("ご注文予約案内", @"https://aksale(\s|\S)+?(?=\r)");
+            setAppointment(mail.address, keyURL);
+        }
 
 
         public int setAppointment(string email, string url){
 
-            form1.setLogT("start setting appointment from " + email );
+            form1.setLogT("CardNo" + appointment.CardNo + ", start setting appointment from " + email);
 
-            string html = Form1.weLoveYue(
+            string result = Form1.weLoveMuYue(
                 form1,
                 url
                 ,
@@ -339,23 +340,21 @@ namespace widkeyPaperDiaper
                 "https://aksale.advs.jp/cp/akachan_sale_pc/mail_form.cgi",
                 false,
                 "",
-                ref cookieContainer,
-                false
+                ref cookieContainer
                 );
 
 
-            if (!html.Equals("Found"))
+            if (!result.Contains("Found"))
             {
                 form1.setLogT("error code from page whose url("+ url +") getting in" + email);
                 return -1;
             }
 
-            html =  Form1.weLoveYue(
+            string html =  Form1.weLoveYue(
                 form1,
-                "https://aksale.advs.jp/cp/akachan_sale_pc/form_card_no.cgi"
-                ,
-                "POST", 
-                "https://aksale.advs.jp/cp/akachan_sale_pc/mail_form.cgi",
+                "https://aksale.advs.jp/cp/akachan_sale_pc/form_card_no.cgi",
+                "POST",
+                result.Substring(6,result.Length-6),
                 false,
                 "card_no=" + appointment.CardNo + "&sbmt=%8E%9F%82%D6",
                 ref cookieContainer,
@@ -367,7 +366,7 @@ namespace widkeyPaperDiaper
                 form1.setLogT("no available quota, url from: " + email);
                 return -2;
             }
-
+            //jiekeshibai
             html = Form1.weLoveYue(
                 form1,
                 "https://aksale.advs.jp/cp/akachan_sale_pc/reg_form_event_1.cgi"
@@ -376,8 +375,17 @@ namespace widkeyPaperDiaper
                 "https://aksale.advs.jp/cp/akachan_sale_pc/form_card_no.cgi",
                 false,
                 "password="+appointment.CardPassword
-                +"&sei=%9B%C1&mei=%94%F2%94%F2&sei_kana=%83T&mei_kana=%83C%83q%83q&tel1=090&tel2=8619&tel3=3569"//daiyyr
-                //chinese charocter's length is also 1
+
+                +"&sei="+ Form1.ToUrlEncode(appointment.ChineseName.Substring(0, 1), System.Text.Encoding.GetEncoding("shift-jis"))
+                +"&mei="+ Form1.ToUrlEncode(appointment.ChineseName.Substring(1, appointment.ChineseName.Length - 1), System.Text.Encoding.GetEncoding("shift-jis"))
+                +"&sei_kana="+Form1.ToUrlEncode(appointment.JapaneseName.Substring(0, 1), System.Text.Encoding.GetEncoding("shift-jis"))
+                +"&mei_kana="+Form1.ToUrlEncode(appointment.JapaneseName.Substring(1, appointment.JapaneseName.Length - 1), System.Text.Encoding.GetEncoding("shift-jis"))
+                +"&tel1="+Regex.Match(appointment.Phone, @"\d+(?=\-)").Value
+                +"&tel2="+Regex.Match(appointment.Phone, @"(?<=\d+\-)\d+(?=-)").Value
+                +"&tel3="+Regex.Match(appointment.Phone, @"(?<=\d+\-\d+\-)\d+").Value
+
+                //"&sei=%9B%C1&mei=%94%F2%94%F2&sei_kana=%83T&mei_kana=%83C%83q%83q&tel1=090&tel2=8619&tel3=3569"
+
                 +"&sbmt=%8E%9F%82%D6",
                 ref cookieContainer,
                 false
@@ -396,7 +404,7 @@ namespace widkeyPaperDiaper
                 );
             
             if(html.Contains("ご予約ありがとうございます")){
-                form1.setLogT("Setting appointment succeed!");
+                form1.setLogT("CardNo" + appointment.CardNo + ", Setting appointment succeed!");//daiyyr details
             }
 
             return 1;
@@ -422,8 +430,8 @@ namespace widkeyPaperDiaper
                 form1.deleteMail.Enabled = false;
                 form1.deleteApp.Enabled = false;
             }
-            
-            form1.setLogT("开始扫描..");
+            form1.setLogT("probe started. CardNo:" + appointment.CardNo + ", " + form1.selecteCounty.Name
+                + " " + form1.selecteCounty.Shops[form1.selectedShop]);
             while (true)
             {
                 if (Form1.gForceToStop)
@@ -432,7 +440,7 @@ namespace widkeyPaperDiaper
                 }
 
                 int r1 = 0;
-
+                sizeType = form1.selectedType;
             //新潟亀田ｱﾋﾟﾀ店  M
             //   http://aksale.advs.jp/cp/akachan_sale_pc/search_event_list.cgi?area2=%90V%8a%83%8c%a7&event_type=6&sid=37140&kmws=
 
@@ -444,7 +452,15 @@ namespace widkeyPaperDiaper
                 //ららぽｰと横浜店
            // http://aksale.advs.jp/cp/akachan_sale_pc/search_event_list.cgi?area2=%90_%93%de%90%ec%8c%a7&event_type=6&sid=37139&kmws=
 
-                while ((r1 = this.probe("%90_%93%de%90%ec%8c%a7", "37139")) == -1)   //daiyyr
+                //春日井店
+                //http://aksale.advs.jp/cp/akachan_sale_pc/search_event_list.cgi?area2=%88%a4%92m%8c%a7&event_type=6&sid=37038&kmws=
+                while ((r1 = this.probe(
+                    Form1.ToUrlEncode(
+                        form1.selecteCounty.Shops[form1.selectedShop], 
+                        System.Text.Encoding.GetEncoding("shift-jis")
+                     ),
+                    form1.selecteCounty.Sids[form1.selectedShop])
+                    ) == -1)   //"%88%a4%92m%8c%a7", "37038"
                 {
   
                 }
@@ -476,8 +492,6 @@ namespace widkeyPaperDiaper
                     }
                 }
             }//end of while
-
-
             if (form1.mailGrid.InvokeRequired)
             {
                 delegate2 sl = new delegate2(delegate()
@@ -503,12 +517,15 @@ namespace widkeyPaperDiaper
 
 
 
-//detail use string2url ok?  use string2url with encode
-
-//import data;   slip phone
 
 //static method in form1 ---->  MushroomUtil  --  in environment (using namespace.MushroomUtil)
 
 //delete grib
 
 //adress choosen commbobox
+
+//succesful details
+
+//event_type=6 zhong  , event_type=7 da
+
+//making program to get county details

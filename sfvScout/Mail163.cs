@@ -36,6 +36,7 @@ namespace widkeyPaperDiaper
         {
             this.address = add;
             this.password = pw;
+            this.form1 = f;
         }
 
         public int login()
