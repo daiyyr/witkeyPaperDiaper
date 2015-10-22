@@ -23,10 +23,11 @@ namespace widkeyPaperDiaper
         
         public static bool debug = false;
 
+        public static int retry = 5;
 
         public static bool gForceToStop = false;
         public static bool gLoginOkFlag = false;
-        static DateTime expireDate = new DateTime(2015, 10, 16);
+        static DateTime expireDate = new DateTime(2015, 10, 25);
         static string rgx;
         static Match myMatch;
         static string gHost = "aksale.advs.jp";
@@ -57,21 +58,154 @@ namespace widkeyPaperDiaper
         public Form1()
         {
             InitializeComponent();
+
             Countylist.Add(new County(
-                "北海道",
-                new List<string> { "旭川店", "屯田ｲﾄｰﾖｰｶﾄﾞｰ店", "ｱﾘｵ札幌店", "新さっぽろ店" },
-                new List<string> { "37116", "37305", "37185", "37187" })
-                );
+            "北海道",
+            new List<string> { "旭川店", "屯田ｲﾄｰﾖｰｶﾄﾞｰ店", "ｱﾘｵ札幌店", "新さっぽろ店" },
+            new List<string> { "37116", "37305", "37185", "37187" })
+            );
             Countylist.Add(new County(
-                "青森県",
-                new List<string> { "青森ｻﾝﾛｰﾄﾞ店" },
-                new List<string> { "37106" })
-                );
+            "青森県",
+            new List<string> { "青森ｻﾝﾛｰﾄﾞ店" },
+            new List<string> { "37106" })
+            );
             Countylist.Add(new County(
-                "宮城県",
-                new List<string> { "仙台泉店", "ﾗﾗｶﾞｰﾃﾞﾝ長町店", "ｱﾘｵ仙台泉店" },
-                new List<string> { "37091", "37175", "37208" })
-                );
+            "宮城県",
+            new List<string> { "仙台泉店", "ﾗﾗｶﾞｰﾃﾞﾝ長町店", "ｱﾘｵ仙台泉店" },
+            new List<string> { "37091", "37175", "37208" })
+            );
+            Countylist.Add(new County(
+            "茨城県",
+            new List<string> { "ニューポートひたちなか店", "丸井水戸店", "つくば店" },
+            new List<string> { "37224", "37195", "37113" })
+            );
+            Countylist.Add(new County(
+            "栃木県",
+            new List<string> { "宇都宮店" },
+            new List<string> { "37075" })
+            );
+            Countylist.Add(new County(
+            "群馬県",
+            new List<string> { "高崎店" },
+            new List<string> { "37031" })
+            );
+            Countylist.Add(new County(
+            "千葉県",
+            new List<string> { "八千代村上店", "幕張ｲﾄｰﾖｰｶﾄﾞｰ店", "ららぽｰと柏の葉店", "ららぽｰとTOKYO-BAY店", "ｱﾘｵ市原店" },
+            new List<string> { "37026", "37319", "37158", "37213", "37212" })
+            );
+            Countylist.Add(new County(
+            "埼玉県",
+            new List<string> { "ｱﾘｵ深谷店", "ｱﾘｵ鷲宮店", "ﾗﾗｶﾞｰﾃﾞﾝ春日部店", "大宮宮原ｲﾄｰﾖｰｶﾄﾞｰ店", "せんげん台店", "ららぽーと富士見店", "上福岡東ｲﾄｰﾖｰｶﾄﾞｰ店", "ｱﾘｵ川口店", "ﾗﾗｶﾞｰﾃﾞﾝ川口店", "草加店", "ららぽｰと新三郷店", "ｱﾘｵ上尾店", "若葉店", "和光ｲﾄｰﾖｰｶﾄﾞｰ店" },
+            new List<string> { "37189", "37205", "37505", "37316", "37176", "37223", "37321", "37200", "37151", "37156", "37174", "37209", "37122", "37314" })
+            );
+            Countylist.Add(new County(
+            "東京都",
+            new List<string> { "小豆沢店", "ｱﾘｵ亀有店", "錦糸町店", "ｱﾘｵ北砂店", "東大和ｲﾄｰﾖｰｶﾄﾞｰ店", "東久留米ｲﾄｰﾖｰｶﾄﾞｰ店", "武蔵小金井ｲﾄｰﾖｰｶﾄﾞｰ店", "拝島ｲﾄｰﾖｰｶﾄﾞｰ店", "ｾﾚｵ八王子店", "ｱﾘｵ西新井店" },
+            new List<string> { "37188", "37130", "37035", "37182", "37323", "37303", "37310", "37313", "37204", "37210" })
+            );
+            Countylist.Add(new County(
+            "神奈川県",
+            new List<string> { "港北東急店", "ららぽｰと横浜店", "ﾗｿﾞｰﾅ川崎店", "川崎ｲﾄｰﾖｰｶﾄﾞｰ店", "ｸﾞﾗﾝﾂﾘｰ武蔵小杉店", "本牧ｲﾄｰﾖｰｶﾄﾞｰ店", "横浜別所ｲﾄｰﾖｰｶﾄﾞｰ店", "東戸塚西武店", "立場ｲﾄｰﾖｰｶﾄﾞｰ店", "ﾃﾗｽﾓｰﾙ湘南店", "ｱﾘｵ橋本店", "古淵ｲﾄｰﾖｰｶﾄﾞｰ店" },
+            new List<string> { "37064", "37139", "37133", "37183", "37219", "37308", "37324", "37178", "37320", "37199", "37186", "37329" })
+            );
+            Countylist.Add(new County(
+            "新潟県",
+            new List<string> { "長岡店" },
+            new List<string> { "37098" })
+            );
+            Countylist.Add(new County(
+            "長野県",
+            new List<string> { "ｱﾘｵ上田店", "ｱﾘｵ松本店" },
+            new List<string> { "37194", "37196" })
+            );
+            Countylist.Add(new County(
+            "山梨県",
+            new List<string> { "甲府昭和ｲﾄｰﾖｰｶﾄﾞｰ店" },
+            new List<string> { "37322" })
+            );
+            Countylist.Add(new County(
+            "石川県",
+            new List<string> { "金沢店" },
+            new List<string> { "37144" })
+            );
+            Countylist.Add(new County(
+            "福井県",
+            new List<string> { "福井店" },
+            new List<string> { "37214" })
+            );
+            Countylist.Add(new County(
+            "静岡県",
+            new List<string> { "浜松宮竹店", "ららぽｰと磐田店", "静岡ｲﾄｰﾖｰｶﾄﾞｰ店" },
+            new List<string> { "37066", "37173", "37328" })
+            );
+            Countylist.Add(new County(
+            "岐阜県",
+            new List<string> { "カラフルタウン岐阜店" },
+            new List<string> { "37307" })
+            );
+            Countylist.Add(new County(
+            "愛知県",
+            new List<string> { "春日井店", "ｱﾋﾟﾀ新守山店", "ｱﾋﾟﾀ東海通店", "ﾘｰﾌｳｫｰｸ稲沢店", "安城ｲﾄｰﾖｰｶﾄﾞｰ店" },
+            new List<string> { "37038", "37207", "37197", "37161", "37327" })
+            );
+            Countylist.Add(new County(
+            "滋賀県",
+            new List<string> { "草津店", "西武大津店" },
+            new List<string> { "37074", "37222" })
+            );
+            Countylist.Add(new County(
+            "兵庫県",
+            new List<string> { "西宮北口店", "甲子園ｲﾄｰﾖｰｶﾄﾞｰ店", "ｶﾅｰﾄ西神戸店", "ﾌﾞﾙﾒｰﾙ舞多聞店", "明石ｲﾄｰﾖｰｶﾄﾞｰ店", "姫路広畑店" },
+            new List<string> { "37063", "37318", "37506", "37211", "37326", "37124" })
+            );
+            Countylist.Add(new County(
+            "大阪府",
+            new List<string> { "西武高槻店", "大阪本町店", "あべのｲﾄｰﾖｰｶﾄﾞｰ店", "津久野ｲﾄｰﾖｰｶﾄﾞｰ店", "ﾎﾟｯﾌﾟﾀｳﾝ住道店", "東大阪ｲﾄｰﾖｰｶﾄﾞｰ店", "ｱﾘｵ八尾店", "ｴｺｰﾙいずみ店", "ららぽーと和泉店" },
+            new List<string> { "37193", "37002", "37317", "37306", "37507", "37315", "37184", "37202", "37221" })
+            );
+            Countylist.Add(new County(
+            "奈良県",
+            new List<string> { "奈良ｲﾄｰﾖｰｶﾄﾞｰ店" },
+            new List<string> { "37309" })
+            );
+            Countylist.Add(new County(
+            "岡山県",
+            new List<string> { "岡山店", "ｱﾘｵ倉敷店" },
+            new List<string> { "37032", "37198" })
+            );
+            Countylist.Add(new County(
+            "和歌山県",
+            new List<string> { "ﾊﾟｰﾑｼﾃｨ和歌山店" },
+            new List<string> { "37220" })
+            );
+            Countylist.Add(new County(
+            "広島県",
+            new List<string> { "福山ｲﾄｰﾖｰｶﾄﾞｰ店", "ゆめタウンみゆき店" },
+            new List<string> { "37325", "37218" })
+            );
+            Countylist.Add(new County(
+            "山口県",
+            new List<string> { "防府店" },
+            new List<string> { "37150" })
+            );
+            Countylist.Add(new County(
+            "愛媛県",
+            new List<string> { "松前店" },
+            new List<string> { "37149" })
+            );
+            Countylist.Add(new County(
+            "福岡県",
+            new List<string> { "飯塚店", "福岡ﾏﾘﾅﾀｳﾝ店" },
+            new List<string> { "37012", "37132" })
+            );
+            Countylist.Add(new County(
+            "佐賀県",
+            new List<string> { "鳥栖店" },
+            new List<string> { "37029" })
+            );
+
+
 
 
             label6.Text = "expire date: " + expireDate.ToString("yyyy-MM-dd");
@@ -214,6 +348,7 @@ namespace widkeyPaperDiaper
                 string html = stream.ReadToEnd();//0=1443934730460
                 string time = Regex.Match(html, @"(?<=0\=)\d{10}").Value;
                 dateTime = TimeZone.CurrentTimeZone.ToLocalTime(new DateTime(1970, 1, 1));
+                //dateTime = (new DateTime(1970, 1, 1));   //Central Standard Time
                 long lTime = long.Parse(time + "0000000");
                 TimeSpan toNow = new TimeSpan(lTime);
                 dateTime = dateTime.Add(toNow);
@@ -339,7 +474,7 @@ namespace widkeyPaperDiaper
 
         public static string resp2html(HttpWebResponse resp, string charSet, Form1 form1)
         {
-            var buffer = GetBytes(resp); 
+            var buffer = GetBytes(form1, resp); 
             if (resp.StatusCode == HttpStatusCode.OK)
             {
                 if (String.IsNullOrEmpty(charSet) || string.Compare(charSet, "ISO-8859-1") == 0)
@@ -406,7 +541,7 @@ namespace widkeyPaperDiaper
 
         }
 
-        private static byte[] GetBytes(WebResponse response)
+        private static byte[] GetBytes(Form1 form1, WebResponse response)
         {
             var length = (int)response.ContentLength;
             byte[] data;
@@ -414,14 +549,20 @@ namespace widkeyPaperDiaper
             using (var memoryStream = new MemoryStream())
             {
                 var buffer = new byte[0x100];
-
-                using (var rs = response.GetResponseStream())
-                {
-                    for (var i = rs.Read(buffer, 0, buffer.Length); i > 0; i = rs.Read(buffer, 0, buffer.Length))
+                try {
+                    using (var rs = response.GetResponseStream())
                     {
-                        memoryStream.Write(buffer, 0, i);
+                        for (var i = rs.Read(buffer, 0, buffer.Length); i > 0; i = rs.Read(buffer, 0, buffer.Length))
+                        {
+                            memoryStream.Write(buffer, 0, i);
+                        }
                     }
                 }
+                catch (Exception e)
+                {
+                    form1.setLogT("read ResponseStream: "+ e.ToString()); //500
+                }
+                
 
                 data = memoryStream.ToArray();
             }
@@ -450,8 +591,12 @@ namespace widkeyPaperDiaper
         public static string weLoveMuYue(Form1 form1, string url, string method, string referer, bool allowAutoRedirect, string postData, ref CookieCollection cookies)
         {
             string result;
-            while (true)
+            for (int i = 0; i < retry;  i++ )
             {
+                if (gForceToStop)
+                {
+                    break;
+                }
                 HttpWebRequest req = (HttpWebRequest)WebRequest.Create(url);
                 HttpWebResponse resp = null;
                 setRequest(req, cookies);
@@ -463,9 +608,10 @@ namespace widkeyPaperDiaper
                 }
                 if (method.Equals("POST"))
                 {
-					if (writePostData (form1, req, postData) < 0) {
-						continue;
-					}
+                    if (writePostData(form1, req, postData) < 0)
+                    {
+                        continue;
+                    }
                 }
                 string respHtml = "";
                 try
@@ -477,7 +623,7 @@ namespace widkeyPaperDiaper
                     form1.setLogT("GetResponse, " + webEx.Status.ToString());
                     if (webEx.Status == WebExceptionStatus.ConnectionClosed)
                     {
-                        form1.setLogT( "wrong address"); //地址错误
+                        form1.setLogT("wrong address"); //地址错误
                     }
                     if (webEx.Status == WebExceptionStatus.ProtocolError)
                     {
@@ -490,7 +636,7 @@ namespace widkeyPaperDiaper
                     result = resp.StatusDescription;
                     if (result == "Found")
                     {
-                        result += ":"+ resp.Headers["location"];
+                        result += ":" + resp.Headers["location"];
                     }
                 }
                 else
@@ -504,7 +650,7 @@ namespace widkeyPaperDiaper
                 }
                 cookies = req.CookieContainer.GetCookies(req.RequestUri);
                 resp.Close();
-                break;
+                return result;
             }
             return string.Empty;
         }
@@ -517,8 +663,12 @@ namespace widkeyPaperDiaper
         public static string weLoveMuYue(Form1 form1, string url, string method, string referer, bool allowAutoRedirect, string postData, ref CookieCollection cookies, string host)
         {
             string result;
-            while (true)
+            for (int i = 0; i < retry; i++)
             {
+                if (gForceToStop)
+                {
+                    break;
+                }
                 HttpWebRequest req = (HttpWebRequest)WebRequest.Create(url);
                 HttpWebResponse resp = null;
                 setRequest(req, cookies);
@@ -573,7 +723,7 @@ namespace widkeyPaperDiaper
                 }
                 cookies = req.CookieContainer.GetCookies(req.RequestUri);
                 resp.Close();
-                break;
+                return result;
             }
             return string.Empty;
         }
@@ -588,8 +738,13 @@ namespace widkeyPaperDiaper
             {
                 return string.Empty;
             }
-            while (true)
+            string respHtml = "";
+            for (int i = 0; i < retry; i++)
             {
+                if (gForceToStop)
+                {
+                    break;
+                }
                 HttpWebRequest req = (HttpWebRequest)WebRequest.Create(url);
                 HttpWebResponse resp = null;
                 setRequest(req, cookies);
@@ -605,7 +760,7 @@ namespace widkeyPaperDiaper
 						continue;
 					}
                 }
-                string respHtml = "";
+                
                 try
                 {
                     resp = (HttpWebResponse)req.GetResponse();
@@ -650,6 +805,7 @@ namespace widkeyPaperDiaper
                     continue;
                 }
             }
+            return respHtml;
         }
 
         /* 
@@ -658,8 +814,12 @@ namespace widkeyPaperDiaper
          */
         public static string weLoveYue(Form1 form1, string url, string method, string referer, bool allowAutoRedirect, string postData, ref CookieCollection cookies, string host, bool responseInUTF8)
         {
-            while (true)
+            for (int i = 0; i < retry; i++)
             {
+                if (gForceToStop)
+                {
+                    break;
+                }
                 HttpWebRequest req = (HttpWebRequest)WebRequest.Create(url);
                 HttpWebResponse resp = null;
                 setRequest(req, cookies);
@@ -721,6 +881,7 @@ namespace widkeyPaperDiaper
                     continue;
                 }
             }
+            return "";
         }
 
         /*
@@ -728,8 +889,12 @@ namespace widkeyPaperDiaper
          */
         public static HttpWebResponse weLoveYueer(Form1 form1, HttpWebResponse resp, string url, string method, string referer, bool allowAutoRedirect, string postData, ref CookieCollection cookies)
         {
-            while (true)
+            for (int i = 0; i < retry; i++)
             {
+                if (gForceToStop)
+                {
+                    break;
+                }
                 HttpWebRequest req = (HttpWebRequest)WebRequest.Create(url);
                 setRequest(req, cookies);
                 req.Method = method;
@@ -772,6 +937,7 @@ namespace widkeyPaperDiaper
                     continue;
                 }
             }
+            return resp;
         }
 
 
@@ -1152,92 +1318,193 @@ namespace widkeyPaperDiaper
 
         private void button1_Click(object sender, EventArgs e)
         {
-            setLogT(Form1.ToUrlEncode("北海道", System.Text.Encoding.GetEncoding("shift-jis")));
-
-            /*
-            PaperDiaper paper = new PaperDiaper(
-                    this,
-                    new Appointment("2800048300159", "abc123456", "崔飛飛", "サイヒヒ", "090-8619-3569"),
-                    new Mail163<PaperDiaper>("15985830370@163.com", "dyyr7921129", this));
-            paper.searchMailDirectely();
-            */
-            //     %9b%c1     %94%f2%94%f2          %83t          %83C%83q%83q      090      8619      3569
-           //"&sei=%9B%C1&mei=%94%F2%94%F2&sei_kana=%83T&mei_kana=%83C%83q%83q&tel1=090&tel2=8619&tel3=3569"
-
-            string x1 = Form1.ToUrlEncode("崔飛飛".Substring(0, 1), System.Text.Encoding.GetEncoding("shift-jis")),
-                   x2 = Form1.ToUrlEncode("崔飛飛".Substring(1, "崔飛飛".Length - 1), System.Text.Encoding.GetEncoding("shift-jis")),
-                   y1 = Form1.ToUrlEncode("サイヒヒ".Substring(0, 1), System.Text.Encoding.GetEncoding("shift-jis")),
-                   y2 = Form1.ToUrlEncode("サイヒヒ".Substring(1, "サイヒヒ".Length - 1), System.Text.Encoding.GetEncoding("shift-jis")),
-                   z1 = Regex.Match("090-8619-3569", @"\d+(?=\-)").Value,
-                   z2 = Regex.Match("090-8619-3569", @"(?<=\d+\-)\d+(?=-)").Value,
-                   z3 = Regex.Match("090-8619-3569", @"(?<=\d+\-\d+\-)\d+").Value;
-            setLogT(x1+" "+x2+" "+y1+" "+y2+" "+z1+" "+z2+" "+z3);
-
-             
 
 
-            string pattern = @"^";
-            string replacement = "1-1-";
-            string result = Regex.Replace("12345", pattern, replacement);
-            setLogT(result);
-
-            rgx = @"(?<=aa).*?(?=aa)";
-            myMatch = (new Regex(rgx)).Match("qqqqqaaqwdsfaafferaafe222aa2222444aa444444222faaloveaa");
-            while (myMatch.Success)
-            {
-                setLogT(myMatch.Groups[0].Value);
-                myMatch = myMatch.NextMatch();
-            }
-
-            string message = "4344.34334.23.24.";
-            Regex rex = new Regex(@"^(\.|\d)+$");
-            if (rex.IsMatch(message))
-            {
-                //float result2 = float.Parse(message);
-                setLogT("match");
-            }
-            else
-                setLogT("not match");
-
-            int aa;
-            if ((aa = 4) == 4)
-            {
-                setLogT(aa.ToString());
-            }
-
-            Regex regex = new Regex(@"( ){2,}");
-            setLogT(regex.Replace("22      22", " "));
-            string[] s = regex.Replace(" abc def kkk   333 ppp ".Trim(), " ").Split(' ');
-            setLogT(s.Length.ToString());
-
-            string test2 = "abc";
-     //       testCall(test2);
-            setLogT(test2);
-
-            Appointment test3 = new Appointment("159","","","","");
-            testCall(ref test3);
-            setLogT(test3.CardNo);
-
-            setLogT("崔飛飛 " + Form1.ToUrlEncode("崔飛飛", System.Text.Encoding.GetEncoding("shift-jis")));//Shift_JIS     ??
-            setLogT("サイヒヒ "+Form1.ToUrlEncode("サイヒヒ"));
-            setLogT("090-8619-3569 "+Form1.ToUrlEncode("090-8619-3569"));
-
-            /*
-            string respHtml = Form1.weLoveYue(
-                this,
-                "https://aksale.advs.jp/cp/akachan_sale_pc/form_card_no.cgi"
-                ,
-                "POST",
-                "https://aksale.advs.jp/cp/akachan_sale_pc/mail_form.cgi",
-                false,
-                "card_no=" + "1234567890123" + "&sbmt=%8E%9F%82%D6",
-                ref cookieContainerForTest,
-                false
+            //for safe call window form
+            delegate2 tttt8987 = new delegate2(
+                delegate() { }
                 );
-             */ 
-            setLogT("崔飛飛 ".Length.ToString());
+            appointmentGrid.Invoke(tttt8987);
 
+            //new thread to run an anominous function 
+            Thread thread1111 = new System.Threading.Thread(
+                delegate()
+              {
+                  /*
+                  foreach (TimeZoneInfo z in TimeZoneInfo.GetSystemTimeZones())
+                      setLogT(z.Id);
+                  */
+
+                    rgx = @"(?<=予約"" >\n.+event_id"" value="")\d+?(?="")";  //there will be a veri code, and we can cheeck up with captcha
+                        
+                    Match myM33atch = (new Regex(rgx)).Match("<input type=\"submit\" name=\"sbmt\" value=\"予約\" >\n<input type=\"hidden\" name=\"event_id\" value=\"4500175502\" ><input type=\"submit\" name=\"sbmt\" value=\"予約キャンセル\" >\n<input type=\"hidden\" name=\"event_id\" value=\"4500175502\" >");
+                    while (myM33atch.Success)
+                    {
+                        setLogT(myM33atch.Value);
+                        myM33atch = myM33atch.NextMatch();
+                    }
+
+
+
+                  /*
+                  //searchMailDirectely
+                  PaperDiaper paper = new PaperDiaper(
+                            this,
+                            new Appointment("2800056599132", "guoguo01", "李花", "りはな", "090-1234-2580"),
+                            new Mail163<PaperDiaper>("15985830370@163.com", "dyyr7921129", this));
+                  //paper.searchMailDirectely();
+                  paper.searchMailDirectelyFromReaded();
+                  */
+
+                  /*
+   // let code help me making code -- get counties
+                   //<option value="%96k%8aC%93%b9" >北海道</option>
+                   string result22="";
+                   string html = weLoveYue(
+                       this,
+                   "http://aksale.advs.jp/cp/akachan_sale_pc/search_shop_top.cgi?event_type=7",
+                   "GET",
+                   "",
+                   false,
+                   "",
+                   ref cookieContainerForTest,
+                   false);
+                                           //      <option value="%96k%8aC%93%b9" >北海道</option>
+                   Match match = (new Regex(@"(?<=\<option value=""(\s|\S)+?"" \>).+?(?=\<\/option)")).Match(html);
+                   while(match.Success){
+                       string t_county = match.Groups[0].Value;
+                       result22+="Countylist.Add(new County("+"\n\""+t_county+"\",\n";
+                       html = weLoveYue(
+                       this,
+                       "http://aksale.advs.jp/cp/akachan_sale_pc/search_shop_area3.cgi",
+                       "POST",
+                       "",
+                       false,
+                       "area2="
+                           +Form1.ToUrlEncode(t_county, System.Text.Encoding.GetEncoding("shift-jis")) 
+                           + "&sbmt=%81%40%8C%9F%8D%F5%81%40&event_type=7",
+                       ref cookieContainerForTest,
+                       false
+                       );
+                       //<a href="./search_event_list.cgi?area2=%96k%8aC%93%b9&event_type=7&sid=37116&kmws=">旭川店</a><br />
+                       string r1 = @"(?<=area2=(\s|\S)+?\&event_type=7\&sid=)\d+";
+                       Match match2 = (new Regex(r1)).Match(html);
+                       {
+                           string t_shop = "";
+                           string t_sid = "";
+                           while (match2.Success)
+                           {
+                               t_sid += "\""+ match2.Groups[0].Value+"\", ";
+                               string r2 = @"(?<=" + match2.Groups[0].Value + @"\&kmws=""\>).+?(?=\<\/a\>)";
+                               Match match3 = (new Regex(r2)).Match(html);
+                               t_shop += "\""+ match3.Groups[0].Value+"\", ";
+                               
+                               match2 = match2.NextMatch();
+                           }
+
+                           t_shop = t_shop.Substring(0,t_shop.Length-2);
+                           t_sid = t_sid.Substring(0, t_sid.Length - 2);
+
+                           result22 += "new List<string> { " + t_shop + " },\n";
+                           result22 += "new List<string> { " + t_sid + " })\n);\n";
+                           
+                       }
+
+                       match = match.NextMatch();
+                   }
+                   setLogT(result22);
             
+                  */
+
+
+
+             //       setLogT(Form1.ToUrlEncode("北海道", System.Text.Encoding.GetEncoding("shift-jis")));
+
+                    //     %9b%c1     %94%f2%94%f2          %83t          %83C%83q%83q      090      8619      3569
+                    //"&sei=%9B%C1&mei=%94%F2%94%F2&sei_kana=%83T&mei_kana=%83C%83q%83q&tel1=090&tel2=8619&tel3=3569"
+
+                    string x1 = Form1.ToUrlEncode("崔飛飛".Substring(0, 1), System.Text.Encoding.GetEncoding("shift-jis")),
+                            x2 = Form1.ToUrlEncode("崔飛飛".Substring(1, "崔飛飛".Length - 1), System.Text.Encoding.GetEncoding("shift-jis")),
+                            y1 = Form1.ToUrlEncode("サイヒヒ".Substring(0, 1), System.Text.Encoding.GetEncoding("shift-jis")),
+                            y2 = Form1.ToUrlEncode("サイヒヒ".Substring(1, "サイヒヒ".Length - 1), System.Text.Encoding.GetEncoding("shift-jis")),
+                            z1 = Regex.Match("090-8619-3569", @"\d+(?=\-)").Value,
+                            z2 = Regex.Match("090-8619-3569", @"(?<=\d+\-)\d+(?=-)").Value,
+                            z3 = Regex.Match("090-8619-3569", @"(?<=\d+\-\d+\-)\d+").Value;
+                    setLogT(x1 + " " + x2 + " " + y1 + " " + y2 + " " + z1 + " " + z2 + " " + z3);
+
+
+
+
+                /*
+                    string pattern = @"^";
+                    string replacement = "1-1-";
+                    string result = Regex.Replace("12345", pattern, replacement);
+                    setLogT(result);
+
+                    rgx = @"(?<=aa).*?(?=aa)";
+                    myMatch = (new Regex(rgx)).Match("qqqqqaaqwdsfaafferaafe222aa2222444aa444444222faaloveaa");
+                    while (myMatch.Success)
+                    {
+                        setLogT(myMatch.Groups[0].Value);
+                        myMatch = myMatch.NextMatch();
+                    }
+
+                    string message = "4344.34334.23.24.";
+                    Regex rex = new Regex(@"^(\.|\d)+$");
+                    if (rex.IsMatch(message))
+                    {
+                        //float result2 = float.Parse(message);
+                        setLogT("match");
+                    }
+                    else
+                        setLogT("not match");
+
+                    int aa;
+                    if ((aa = 4) == 4)
+                    {
+                        setLogT(aa.ToString());
+                    }
+
+                    Regex regex = new Regex(@"( ){2,}");
+                    setLogT(regex.Replace("22      22", " "));
+                    string[] s = regex.Replace(" abc def kkk   333 ppp ".Trim(), " ").Split(' ');
+                    setLogT(s.Length.ToString());
+
+                    string test2 = "abc";
+                    //       testCall(test2);
+                    setLogT(test2);
+
+                    Appointment test3 = new Appointment("159", "", "", "", "");
+                    testCall(ref test3);
+                    setLogT(test3.CardNo);
+
+                    setLogT("崔飛飛 " + Form1.ToUrlEncode("崔飛飛", System.Text.Encoding.GetEncoding("shift-jis")));//Shift_JIS     ??
+                    setLogT("サイヒヒ " + Form1.ToUrlEncode("サイヒヒ"));
+                    setLogT("090-8619-3569 " + Form1.ToUrlEncode("090-8619-3569"));
+
+
+                string respHtml = Form1.weLoveYue(
+                    this,
+                    "https://aksale.advs.jp/cp/akachan_sale_pc/form_card_no.cgi"
+                    ,
+                    "POST",
+                    "https://aksale.advs.jp/cp/akachan_sale_pc/mail_form.cgi",
+                    false,
+                    "card_no=" + "1234567890123" + "&sbmt=%8E%9F%82%D6",
+                    ref cookieContainerForTest,
+                    false
+                    );
+                       
+                setLogT("崔飛飛 ".Length.ToString());
+
+
+                    */
+
+
+              });
+            thread1111.Start();
+           
+
         }
         void testCall(ref Appointment t)
         {
@@ -1281,6 +1548,7 @@ namespace widkeyPaperDiaper
                 {
                     comboBox2.Items.Add(selecteCounty.Shops[i]);
                 }
+                comboBox2.SelectedIndex = 0;
             }
             else
             {
@@ -1294,13 +1562,30 @@ namespace widkeyPaperDiaper
         private void comboBox2_SelectedIndexChanged(object sender, EventArgs e)
         {
             selectedShop = comboBox2.SelectedIndex;
+            showNextAppTime();
         }
 
         private void comboBox3_SelectedIndexChanged(object sender, EventArgs e)
         {
-            selectedType = comboBox2.SelectedIndex == 0 ? "6" : "7";//only made 6 / 7 for temp
+            selectedType = comboBox3.SelectedIndex == 0 ? "6" : "7";//only made 6 / 7 for temp
+            showNextAppTime();
         }
 
+        private void showNextAppTime()
+        {
+            if (selecteCounty == null || selectedShop == -1 || selectedType == null)
+            {
+                return;
+            }
+            if (selectedShop >= selecteCounty.Shops.Count)
+            {
+                return;
+            }
+            label14.Text = "enquiring the nearest booking...";
+            PaperDiaper paper = new PaperDiaper(this, null, null);
+            Thread t = new Thread(paper.showNextAppTime);
+            t.Start();
+        }
 
 
         /*

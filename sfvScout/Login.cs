@@ -23,8 +23,8 @@ namespace widkeyPaperDiaper
 
         //    string username = "";           
         //    string password = "";
-        string username = "54739633%40qq.com";
-        string password = "dyyr0125";
+        string username = "";
+        string password = "";
         Form1 form1;
         CookieCollection cookieContainer = null;
 

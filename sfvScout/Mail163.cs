@@ -210,13 +210,118 @@ namespace widkeyPaperDiaper
                 }
                 else
                 {
-                    //do not find the notification mail
+                    form1.setLogtRed("do not find the notification mail");
+                    return "";
                 }
             }
 
         }
 
 
+        public string queeryReaded(string queeryTitle, string contentRegex)
+        {
+            if (queeryTitle == null || queeryTitle == "")
+            {
+                queeryTitle = QueeryTitle;
+            }
+            if (contentRegex == null || contentRegex == "")
+            {
+                contentRegex = ContentRegex;
+            }
+            if (!haveLogin)
+            {
+                login();
+            }
+
+            while (true)
+            {
+                // get readed mails
+                string html = Form1.weLoveYue(
+                    form1,
+                    "http://hwwebmail.mail.163.com/js6/s?sid=" + sid + "&func=mbox:listMessages&TopTabReaderShow=1&TopTabLofterShow=1&welcome_welcomemodule_mailrecom_click=1&LeftNavfolder1Click=1&mbox_folder_enter=1",
+                    //http://hwwebmail.mail.163.com/js6/s?sid=wAmXlMjmMrQocSziZrmmrOINFjUUvWpC&func=mbox:listMessages&TopTabReaderShow=1&TopTabLofterShow=1&welcome_welcomemodule_mailrecom_click=1&LeftNavfolder1Click=1&mbox_folder_enter=1
+                    "POST",
+                    "http://mail.163.com/",
+                    false,
+                    "var=%3C%3Fxml%20version%3D%221.0%22%3F%3E%3Cobject%3E%3Cint%20name%3D%22fid%22%3E1%3C%2Fint%3E%3Cstring"
++"%20name%3D%22order%22%3Edate%3C%2Fstring%3E%3Cboolean%20name%3D%22desc%22%3Etrue%3C%2Fboolean%3E%3Cint"
++"%20name%3D%22limit%22%3E20%3C%2Fint%3E%3Cint%20name%3D%22start%22%3E0%3C%2Fint%3E%3Cboolean%20name%3D"
++"%22skipLockedFolders%22%3Efalse%3C%2Fboolean%3E%3Cstring%20name%3D%22topFlag%22%3Etop%3C%2Fstring%3E"
++"%3Cboolean%20name%3D%22returnTag%22%3Etrue%3C%2Fboolean%3E%3Cboolean%20name%3D%22returnTotal%22%3Etrue"
++"%3C%2Fboolean%3E%3C%2Fobject%3E",
+
+               ref  cookieContainer,
+
+                    "hwwebmail.mail.163.com",
+                true
+                    );
+
+                if (html.Contains("<string name=\"subject\">"+queeryTitle+"</string>"))
+                {
+                    mid = Regex.Match(html, @"(?<=<string name=""id"">).+?(?=<\/string>\n.*\n.*\n.*\n.*\n.*"+queeryTitle+")").Value;
+                    //<string name="id">47:1tbiLxuMOFUL4Qg6aQAAsk</string>
+                    //......4 lines
+                    //<string name="subject">ご注文予約案内</string>
+
+
+                    
+
+                    /*
+                    //POST requst the specific mail
+                    html = Form1.weLoveYue(
+                        form1,
+                        "http://hwwebmail.mail.163.com/js6/s?sid="+sid+"&func=mbox:readMessage&deftabclick=t3&l=read&action=read",
+               //        http://hwwebmail.mail.163.com/js6/s?sid=JASffhvoYoQOwBeuygooOMBOzURbdSPL&func=mbox:readMessage&deftabclick=t3&mbox_mobile_ul_icon_show=1&l=read&action=read
+                        "POST",
+                        "http://hwwebmail.mail.163.com/js6/main.jsp?sid=" + sid + "&df=mail163_letter",
+                        false,
+                        "var=%3C%3Fxml%20version%3D%221.0%22%3F%3E%3Cobject%3E%3Cstring%20name%3D%22id%22%3E"+ Form1.ToUrlEncode(mid) //171%3A1tbiqxSMOFUL7APXEQAAs8
+                        + "%3C%2Fstring%3E%3Cboolean%20name%3D%22header%22%3Etrue%3C%2Fboolean%3E%3Cboolean%20name%3D%22returnImageInfo"
+                        + "%22%3Etrue%3C%2Fboolean%3E%3Cboolean%20name%3D%22returnAntispamInfo%22%3Etrue%3C%2Fboolean%3E%3Cboolean"
+                        + "%20name%3D%22autoName%22%3Etrue%3C%2Fboolean%3E%3Cobject%20name%3D%22returnHeaders%22%3E%3Cstring%20name"
+                        + "%3D%22Resent-From%22%3EA%3C%2Fstring%3E%3Cstring%20name%3D%22Sender%22%3EA%3C%2Fstring%3E%3Cstring%20name"
+                        + "%3D%22List-Unsubscribe%22%3EA%3C%2Fstring%3E%3Cstring%20name%3D%22Reply-To%22%3EA%3C%2Fstring%3E%3C%2Fobject"
+                        + "%3E%3Cboolean%20name%3D%22supportTNEF%22%3Etrue%3C%2Fboolean%3E%3C%2Fobject%3E",
+
+                        "mail.163.com"
+                        );
+                    */
+
+
+                    //GET the content
+                    html = Form1.weLoveYue(
+                    form1,
+                    "http://hwwebmail.mail.163.com/js6/read/readhtml.jsp?mid=" + mid + "&font=15&color=064977", //171:1tbiqxSMOFUL7APXEQAAs8
+                   //http://hwwebmail.mail.163.com/js6/read/readhtml.jsp?mid=171:1tbiqxSMOFUL7APXEQAAs8&font=15&color=064977
+                    "GET",
+                    "http://hwwebmail.mail.163.com/js6/main.jsp?sid=" + sid + "&df=mail163_letter",
+                    false,
+                    "",
+               ref cookieContainer,
+                    "hwwebmail.mail.163.com",
+                true
+                    );
+
+
+                    target = Regex.Match(html, contentRegex ).Value;
+
+              //      <pre>下記URLより予約フォームにお進みいただき、ご登録いただくと予約が完了いたします。
+
+              //      https://aksale.advs.jp/cp/akachan_sale_pc/reg?id=w9EI8lKSAvC4he7hZIEWESR6JYXLHg1w
+
+
+               //(c)AKACHAN HONPO
+
+
+                    return target;
+                }
+                else
+                {
+                    form1.setLogtRed("do not find the notification mail");
+                }
+            }
+
+        }
 
     }
 }

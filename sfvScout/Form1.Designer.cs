@@ -72,6 +72,8 @@
             this.label11 = new System.Windows.Forms.Label();
             this.label12 = new System.Windows.Forms.Label();
             this.comboBox3 = new System.Windows.Forms.ComboBox();
+            this.label13 = new System.Windows.Forms.Label();
+            this.label14 = new System.Windows.Forms.Label();
             ((System.ComponentModel.ISupportInitialize)(this.appointmentGrid)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.appointmentBindingSource2)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).BeginInit();
@@ -241,7 +243,7 @@
             // 
             // button2
             // 
-            this.button2.Location = new System.Drawing.Point(535, 15);
+            this.button2.Location = new System.Drawing.Point(549, 15);
             this.button2.Name = "button2";
             this.button2.Size = new System.Drawing.Size(127, 46);
             this.button2.TabIndex = 20;
@@ -498,11 +500,29 @@
             this.comboBox3.TabIndex = 33;
             this.comboBox3.SelectedIndexChanged += new System.EventHandler(this.comboBox3_SelectedIndexChanged);
             // 
+            // label13
+            // 
+            this.label13.AutoSize = true;
+            this.label13.Location = new System.Drawing.Point(192, 90);
+            this.label13.Name = "label13";
+            this.label13.Size = new System.Drawing.Size(0, 12);
+            this.label13.TabIndex = 34;
+            // 
+            // label14
+            // 
+            this.label14.AutoSize = true;
+            this.label14.Location = new System.Drawing.Point(190, 69);
+            this.label14.Name = "label14";
+            this.label14.Size = new System.Drawing.Size(0, 12);
+            this.label14.TabIndex = 35;
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(1149, 641);
+            this.Controls.Add(this.label14);
+            this.Controls.Add(this.label13);
             this.Controls.Add(this.comboBox3);
             this.Controls.Add(this.label12);
             this.Controls.Add(this.label11);
@@ -594,6 +614,8 @@
         private System.Windows.Forms.Label label11;
         private System.Windows.Forms.Label label12;
         private System.Windows.Forms.ComboBox comboBox3;
+        private System.Windows.Forms.Label label13;
+        public System.Windows.Forms.Label label14;
     }
 }
 
