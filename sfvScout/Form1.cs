@@ -21,7 +21,7 @@ namespace widkeyPaperDiaper
     public partial class Form1 : Form
     {
         
-        public static bool debug = false;
+        public static bool debug = true;
 
         public static int retry = 5;
 
@@ -955,6 +955,18 @@ namespace widkeyPaperDiaper
         private void autoB_Click(object sender, EventArgs e)
         {
             setLogtRed("user operation: start probing");
+
+            if (selecteCounty == null || selectedShop == -1 || selectedType == null)
+            {
+                this.setLogT("please choose type, county and shop");
+                return;
+            }
+            if (selectedShop >= selecteCounty.Shops.Count)
+            {
+                this.setLogT("invalid selected shop");
+                return;
+            }
+
             if (debug)
             {
                 PaperDiaper paper = new PaperDiaper(
@@ -966,16 +978,7 @@ namespace widkeyPaperDiaper
             }
             else
             {
-                if (selecteCounty == null || selectedShop == -1 || selectedType == null)
-                {
-                    this.setLogT("please choose type, county and shop");
-                    return;
-                }
-                if (selectedShop >= selecteCounty.Shops.Count)
-                {
-                    this.setLogT("invalid selected shop");
-                    return;
-                }
+                
 
                 if (Applist == null || Applist.Count < 1)
                 {
@@ -1319,6 +1322,7 @@ namespace widkeyPaperDiaper
         private void button1_Click(object sender, EventArgs e)
         {
 
+           
 
             //for safe call window form
             delegate2 tttt8987 = new delegate2(
@@ -1330,6 +1334,14 @@ namespace widkeyPaperDiaper
             Thread thread1111 = new System.Threading.Thread(
                 delegate()
               {
+
+                  //test Mail Reading
+
+                  Mail163<PaperDiaper> testMailReading = new Mail163<PaperDiaper>("15985830370@163.com", "dyyr7921129", this);
+                  //      setLogT(testMailReading.queery("20151117test1", @"(\s|\S)*"));
+                  setLogT(testMailReading.queeryReaded("20151117test1", @"(\s|\S)*"));
+
+
                   /*
                   foreach (TimeZoneInfo z in TimeZoneInfo.GetSystemTimeZones())
                       setLogT(z.Id);
