@@ -12,6 +12,8 @@ using System.Text.RegularExpressions;
 using System.Threading;
 using System.Globalization;
 using System.Net.Cache;
+using System.Collections;
+
 
 namespace widkeyPaperDiaper
 {
@@ -21,13 +23,13 @@ namespace widkeyPaperDiaper
     public partial class Form1 : Form
     {
         
-        public static bool debug = true;
+        public static bool debug = false;
 
         public static int retry = 5;
 
         public static bool gForceToStop = false;
         public static bool gLoginOkFlag = false;
-        static DateTime expireDate = new DateTime(2015, 10, 25);
+        static DateTime expireDate = new DateTime(2025, 12, 13);
         static string rgx;
         static Match myMatch;
         static string gHost = "aksale.advs.jp";
@@ -233,7 +235,7 @@ namespace widkeyPaperDiaper
                 }
             }
         }
-
+        
         
 
         public delegate void setLog(string str1);
@@ -1319,10 +1321,42 @@ namespace widkeyPaperDiaper
             t.Start();
         }
 
+
+        // for texting indexer begin
+        private string[] arr = new string[100];
+        public string this[int i]
+        {
+            get
+            {
+                // This indexer is very simple, and just returns or sets
+                // the corresponding element from the internal array.
+                return arr[i];
+            }
+            set
+            {
+                arr[i] = value;
+            }
+        }
+        // for texting indexer end
+
+          enum aaaa{
+                  a=1,
+                  b,
+                  c=4,
+                  d=a|b,
+                  e=c|a,
+                  f=b|c
+                  }
+
+        // test button
         private void button1_Click(object sender, EventArgs e)
         {
-
-           
+            // for texting indexer begin
+            Form1 stringCollection = new Form1();
+            // Use [] notation on the type.
+            stringCollection[0] = "test indexer";
+            System.Console.WriteLine(stringCollection[0]);
+            // for texting indexer end
 
             //for safe call window form
             delegate2 tttt8987 = new delegate2(
@@ -1335,8 +1369,14 @@ namespace widkeyPaperDiaper
                 delegate()
               {
 
-                  //test Mail Reading
 
+                  string[] aaa = new string[] { "222", "333"};
+
+                  Console.Write((int)aaaa.f);
+
+                
+
+                  //test Mail Reading
                   Mail163<PaperDiaper> testMailReading = new Mail163<PaperDiaper>("15985830370@163.com", "dyyr7921129", this);
                   //      setLogT(testMailReading.queery("20151117test1", @"(\s|\S)*"));
                   setLogT(testMailReading.queeryReaded("20151117test1", @"(\s|\S)*"));
@@ -1627,4 +1667,15 @@ namespace widkeyPaperDiaper
         }
         */
     }
+
+    
+
+
+
+
+
+
+
+
+
 }
